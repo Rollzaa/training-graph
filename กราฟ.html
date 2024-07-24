@@ -1,0 +1,48 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        // อ่านค่าจาก URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const time1 = parseFloat(urlParams.get('time1'));
+        const time2 = parseFloat(urlParams.get('time2'));
+        const time3 = parseFloat(urlParams.get('time3'));
+
+        // แปลงค่าจากนาทีทศนิยมเป็นนาทีและวินาที
+        function formatTime(decimalMinutes) {
+          const minutes = Math.floor(decimalMinutes);
+          const seconds = Math.round((decimalMinutes - minutes) * 60);
+          return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        var data = google.visualization.arrayToDataTable([
+          ['การฝึกครั้งที่', 'เวลาการฝึก (นาที.วินาที)'],
+          ['ครั้งที่ 1', time1],
+          ['ครั้งที่ 2', time2],
+          ['ครั้งที่ 3', time3],
+        ]);
+
+        var options = {
+          title: 'เวลาการฝึกในแต่ละครั้ง',
+          curveType: 'function',
+          legend: { position: 'bottom' },
+          vAxis: {
+            format: '##.##'
+          }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="curve_chart" style="width: 100%; height: 500px"></div>
+  </body>
+</html>
