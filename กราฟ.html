@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -12,6 +12,12 @@
         const time1 = parseFloat(urlParams.get('time1'));
         const time2 = parseFloat(urlParams.get('time2'));
         const time3 = parseFloat(urlParams.get('time3'));
+
+        // ตรวจสอบค่าที่ได้รับ
+        if (isNaN(time1) || isNaN(time2) || isNaN(time3)) {
+          alert("ค่าเวลาที่ได้รับไม่ถูกต้อง");
+          return;
+        }
 
         // แปลงค่าจากนาทีทศนิยมเป็นนาทีและวินาที
         function formatTime(decimalMinutes) {
@@ -38,7 +44,12 @@
 
         var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
 
-        chart.draw(data, options);
+        try {
+          chart.draw(data, options);
+        } catch (error) {
+          console.error("Error drawing chart:", error);
+          alert("เกิดข้อผิดพลาดในการวาดกราฟ");
+        }
       }
     </script>
   </head>
