@@ -18,24 +18,30 @@
           return;
         }
 
-        // ข้อมูลเวลา (สะสมจากจุดเริ่มต้น)
+        // เวลาสะสมเริ่มจากครั้งที่ 1
+        const totalTime1 = time1;                  // เริ่มที่เวลาครั้งที่ 1
+        const totalTime2 = totalTime1 + time2;     // เวลาครั้งที่ 2 สะสมจากครั้งที่ 1
+        const totalTime3 = totalTime2 + time3;     // เวลาครั้งที่ 3 สะสมจากครั้งที่ 2
+
+        // เตรียมข้อมูลกราฟ
         var data = google.visualization.arrayToDataTable([
           ['ครั้งที่', 'เวลาสะสม (วินาที)'],
-          ['ครั้งที่ 1', time1],           // ครั้งที่ 1
-          ['ครั้งที่ 2', time1 + time2],   // ครั้งที่ 2 (สะสม)
-          ['ครั้งที่ 3', time1 + time2 + time3] // ครั้งที่ 3 (สะสม)
+          ['ครั้งที่ 1', totalTime1],  // ครั้งที่ 1
+          ['ครั้งที่ 2', totalTime2],  // ครั้งที่ 2
+          ['ครั้งที่ 3', totalTime3]   // ครั้งที่ 3
         ]);
 
         var options = {
-          title: 'เวลาการฝึกสะสมแต่ละครั้ง',
+          title: 'เวลาการฝึกสะสมจากแต่ละครั้ง',
           curveType: 'function',
           legend: { position: 'bottom' },
           hAxis: {
-            title: 'เวลาสะสม (วินาที)', // แกน X แสดงเวลาสะสม
+            title: 'การฝึกแต่ละครั้ง',
             format: 'decimal'
           },
           vAxis: {
-            title: 'การฝึกครั้งที่',  // แกน Y แสดงครั้งที่ 1, 2, 3
+            title: 'เวลาสะสม (วินาที)',
+            format: 'decimal'
           }
         };
 
@@ -60,3 +66,4 @@
     <div id="curve_chart" style="width: 100%; height: 500px"></div>
   </body>
 </html>
+
