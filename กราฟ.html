@@ -18,26 +18,24 @@
           return;
         }
 
-        // เตรียมข้อมูลเวลา (สะสมจาก 0)
+        // ข้อมูลเวลา (สะสมจากจุดเริ่มต้น)
         var data = google.visualization.arrayToDataTable([
-          ['เวลา (วินาที)', 'เวลาการฝึก (วินาที)'],
-          [0, 0],              // เริ่มต้นที่ 0
-          [time1, time1],      // ครั้งที่ 1
-          [time1 + time2, time2], // ครั้งที่ 2
-          [time1 + time2 + time3, time3] // ครั้งที่ 3
+          ['ครั้งที่', 'เวลาสะสม (วินาที)'],
+          ['ครั้งที่ 1', time1],           // ครั้งที่ 1
+          ['ครั้งที่ 2', time1 + time2],   // ครั้งที่ 2 (สะสม)
+          ['ครั้งที่ 3', time1 + time2 + time3] // ครั้งที่ 3 (สะสม)
         ]);
 
         var options = {
-          title: 'เวลาการฝึกสะสมจาก 0',
+          title: 'เวลาการฝึกสะสมแต่ละครั้ง',
           curveType: 'function',
           legend: { position: 'bottom' },
           hAxis: {
-            title: 'เวลา (วินาที)',  // แกน X แสดงเวลาสะสม
+            title: 'เวลาสะสม (วินาที)', // แกน X แสดงเวลาสะสม
             format: 'decimal'
           },
           vAxis: {
-            title: 'เวลาการฝึก (วินาที)',
-            format: 'decimal'
+            title: 'การฝึกครั้งที่',  // แกน Y แสดงครั้งที่ 1, 2, 3
           }
         };
 
@@ -45,7 +43,7 @@
         chart.draw(data, options);
       }
 
-      // ฟังก์ชันแปลง นาที:วินาที -> วินาทีทั้งหมด
+      // ฟังก์ชันแปลงเวลา นาที:วินาที -> วินาทีทั้งหมด
       function convertTime(timeString) {
         if (!timeString) return NaN;
         const parts = timeString.split(':');
