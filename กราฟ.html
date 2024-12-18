@@ -7,45 +7,57 @@
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-        // อ่านค่าจาก URL
+        // อ่านค่าเวลาจาก URL
         const urlParams = new URLSearchParams(window.location.search);
-        const time1 = parseFloat(urlParams.get('time1'));
-        const time2 = parseFloat(urlParams.get('time2'));
-        const time3 = parseFloat(urlParams.get('time3'));
+        const time1 = convertTime(urlParams.get('time1')); // ครั้งที่ 1
+        const time2 = convertTime(urlParams.get('time2')); // ครั้งที่ 2
+        const time3 = convertTime(urlParams.get('time3')); // ครั้งที่ 3
 
-        // ตรวจสอบค่าที่ได้รับ
         if (isNaN(time1) || isNaN(time2) || isNaN(time3)) {
-          alert("ค่าเวลาที่ได้รับไม่ถูกต้อง");
+          alert("ค่าเวลาที่ป้อนไม่ถูกต้อง");
           return;
         }
 
+        // เตรียมข้อมูลเวลา (สะสมจาก 0)
         var data = google.visualization.arrayToDataTable([
-          ['การฝึกครั้งที่', 'เวลาการฝึก (นาที.วินาที)'],
-          ['ครั้งที่ 1', time1],
-          ['ครั้งที่ 2', time2],
-          ['ครั้งที่ 3', time3],
+          ['เวลา (วินาที)', 'เวลาการฝึก (วินาที)'],
+          [0, 0],              // เริ่มต้นที่ 0
+          [time1, time1],      // ครั้งที่ 1
+          [time1 + time2, time2], // ครั้งที่ 2
+          [time1 + time2 + time3, time3] // ครั้งที่ 3
         ]);
 
         var options = {
-          title: 'เวลาการฝึกในแต่ละครั้ง',
+          title: 'เวลาการฝึกสะสมจาก 0',
           curveType: 'function',
           legend: { position: 'bottom' },
+          hAxis: {
+            title: 'เวลา (วินาที)',  // แกน X แสดงเวลาสะสม
+            format: 'decimal'
+          },
           vAxis: {
-            format: '##.##'
+            title: 'เวลาการฝึก (วินาที)',
+            format: 'decimal'
           }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-
         chart.draw(data, options);
+      }
+
+      // ฟังก์ชันแปลง นาที:วินาที -> วินาทีทั้งหมด
+      function convertTime(timeString) {
+        if (!timeString) return NaN;
+        const parts = timeString.split(':');
+        if (parts.length === 2) {
+          const minutes = parseInt(parts[0]);
+          const seconds = parseInt(parts[1]);
+          return minutes * 60 + seconds;
+        }
+        return parseInt(timeString); // ถ้าเป็นวินาทีอย่างเดียว
       }
     </script>
   </head>
-  <body>
-    <div id="curve_chart" style="width: 100%; height: 500px"></div>
-  </body>
-</html>
-
   <body>
     <div id="curve_chart" style="width: 100%; height: 500px"></div>
   </body>
