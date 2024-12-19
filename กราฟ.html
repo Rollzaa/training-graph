@@ -7,58 +7,37 @@
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-        // อ่านค่าเวลาจาก URL
+        // อ่านค่าจาก URL
         const urlParams = new URLSearchParams(window.location.search);
-        const time1 = convertTime(urlParams.get('time1')); // ครั้งที่ 1
-        const time2 = convertTime(urlParams.get('time2')); // ครั้งที่ 2
-        const time3 = convertTime(urlParams.get('time3')); // ครั้งที่ 3
+        const time1 = parseFloat(urlParams.get('time1'));
+        const time2 = parseFloat(urlParams.get('time2'));
+        const time3 = parseFloat(urlParams.get('time3'));
 
+        // ตรวจสอบค่าที่ได้รับ
         if (isNaN(time1) || isNaN(time2) || isNaN(time3)) {
-          alert("ค่าเวลาที่ป้อนไม่ถูกต้อง");
+          alert("ค่าเวลาที่ได้รับไม่ถูกต้อง");
           return;
         }
 
-        // เวลาสะสมเริ่มจากครั้งที่ 1
-        const totalTime1 = time1;                  // เริ่มที่เวลาครั้งที่ 1
-        const totalTime2 = totalTime1 + time2;     // เวลาครั้งที่ 2 สะสมจากครั้งที่ 1
-        const totalTime3 = totalTime2 + time3;     // เวลาครั้งที่ 3 สะสมจากครั้งที่ 2
-
-        // เตรียมข้อมูลกราฟ
         var data = google.visualization.arrayToDataTable([
-          ['ครั้งที่', 'เวลาสะสม (วินาที)'],
-          ['ครั้งที่ 1', totalTime1],  // ครั้งที่ 1
-          ['ครั้งที่ 2', totalTime2],  // ครั้งที่ 2
-          ['ครั้งที่ 3', totalTime3]   // ครั้งที่ 3
+          ['การฝึกครั้งที่', 'เวลาการฝึก (นาที.วินาที)'],
+          ['ครั้งที่ 1', time1],
+          ['ครั้งที่ 2', time2],
+          ['ครั้งที่ 3', time3],
         ]);
 
         var options = {
-          title: 'เวลาการฝึกสะสมจากแต่ละครั้ง',
+          title: 'เวลาการฝึกในแต่ละครั้ง',
           curveType: 'function',
           legend: { position: 'bottom' },
-          hAxis: {
-            title: 'การฝึกแต่ละครั้ง',
-            format: 'decimal'
-          },
           vAxis: {
-            title: 'เวลาสะสม (วินาที)',
-            format: 'decimal'
+            format: '##.##'
           }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-        chart.draw(data, options);
-      }
 
-      // ฟังก์ชันแปลงเวลา นาที:วินาที -> วินาทีทั้งหมด
-      function convertTime(timeString) {
-        if (!timeString) return NaN;
-        const parts = timeString.split(':');
-        if (parts.length === 2) {
-          const minutes = parseInt(parts[0]);
-          const seconds = parseInt(parts[1]);
-          return minutes * 60 + seconds;
-        }
-        return parseInt(timeString); // ถ้าเป็นวินาทีอย่างเดียว
+        chart.draw(data, options);
       }
     </script>
   </head>
