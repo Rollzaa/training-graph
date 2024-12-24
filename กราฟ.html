@@ -12,20 +12,26 @@
         const time1 = parseFloat(urlParams.get('time1'));
         const time2 = parseFloat(urlParams.get('time2'));
         const time3 = parseFloat(urlParams.get('time3'));
+        const time4 = parseFloat(urlParams.get('time4'));
+        const time5 = parseFloat(urlParams.get('time5'));
 
         // ตรวจสอบค่าที่ได้รับ
-        if (isNaN(time1) || isNaN(time2) || isNaN(time3)) {
+        if (isNaN(time1) || isNaN(time2) || isNaN(time3) || isNaN(time4) || isNaN(time5)) {
           alert("ค่าเวลาที่ได้รับไม่ถูกต้อง");
           return;
         }
 
+        // เตรียมข้อมูลกราฟ
         var data = google.visualization.arrayToDataTable([
           ['การฝึกครั้งที่', 'เวลาการฝึก (นาที.วินาที)'],
           ['ครั้งที่ 1', time1],
           ['ครั้งที่ 2', time2],
           ['ครั้งที่ 3', time3],
+          ['ครั้งที่ 4', time4],
+          ['ครั้งที่ 5', time5],
         ]);
 
+        // กำหนดค่าต่าง ๆ ของกราฟ
         var options = {
           title: 'เวลาการฝึกในแต่ละครั้ง',
           curveType: 'function',
@@ -35,8 +41,8 @@
           }
         };
 
+        // แสดงกราฟ
         var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-
         chart.draw(data, options);
       }
     </script>
@@ -45,4 +51,3 @@
     <div id="curve_chart" style="width: 100%; height: 500px"></div>
   </body>
 </html>
-
