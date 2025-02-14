@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swimming Time Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>เลือกท่าทางและบันทึกเวลา</h2>
+  <select id="strokeSelect">
+    <option value="freestyle">Freestyle</option>
+    <option value="breaststroke">Breaststroke</option>
+    <option value="butterfly">Butterfly</option>
+    <option value="backstroke">Backstroke</option>
+  </select>
+  <input type="text" id="timeInput" placeholder="เวลา (วินาที)">
+  <button onclick="saveTime()">บันทึกเวลา</button>
+  <button onclick="generateGraph()">สร้างกราฟ</button>
+
+  <h3>กราฟเวลา</h3>
+  <canvas id="myChart" width="400" height="200"></canvas>
+
+  <script>
+    let times = {
+      freestyle: [],
+      breaststroke: [],
+      butterfly: [],
+      backstroke: []
+    };
+
+    function saveTime() {
+      const stroke = document.getElementById('strokeSelect').value;
+      const timeInput = document.getElementById('timeInput').value;
+      if (timeInput && !isNaN(timeInput)) {
+        times[stroke].push(parseFloat(timeInput));
+        alert(`บันทึกเวลาสำหรับท่า ${stroke}: ${timeInput} วินาที`);
+        document.getElementById('timeInput').value = ''; // Clear input field
+      } else {
+        alert('กรุณากรอกเวลาให้ถูกต้อง');
+      }
+    }
+
+    function generateGraph() {
+      const ctx = document.getElementById('myChart').getContext('2d');
+
+      const averageTimes = {
+        freestyle: calculateAverage(times.freestyle),
+        breaststroke: calculateAverage(times.breaststroke),
+        butterfly: calculateAverage(times.butterfly),
+        backstroke: calculateAverage(times.backstroke)
+      };
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Freestyle', 'Breaststroke', 'Butterfly', 'Backstroke'],
+          datasets: [{
+            label: 'Average Time (s)',
+            data: [
+              averageTimes.freestyle,
+              averageTimes.breaststroke,
+              averageTimes.butterfly,
+              averageTimes.backstroke
+            ],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    function calculateAverage(timesArray) {
+      if (timesArray.length === 0) return 0;
+      const sum = timesArray.reduce((a, b) => a + b, 0);
+      return sum / timesArray.length;
+    }
+  </script>
+</body>
+</html>
