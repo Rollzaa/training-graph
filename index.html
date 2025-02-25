@@ -1,9 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-    <title>Test Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กราฟเวลาว่ายน้ำ</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        canvas { max-width: 80%; margin: 20px auto; }
+    </style>
 </head>
 <body>
-    <h1>Hello, GitHub Pages!</h1>
+    <h2>กราฟค่าเฉลี่ยเวลาว่ายน้ำ</h2>
+    <canvas id="myChart"></canvas>
+
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+
+        // ข้อมูลตัวอย่าง
+        let swimTimes = [85, 95, 130]; // วินาที
+        let sessionLabels = ['ครั้งที่ 1', 'ครั้งที่ 2', 'ครั้งที่ 3'];
+
+        function calculateAverage(times) {
+            let total = times.reduce((sum, time) => sum + time, 0);
+            let avg = total / times.length;
+            let minutes = Math.floor(avg / 60);
+            let seconds = Math.round(avg % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        let avgTimes = swimTimes.map((_, index) => {
+            let subset = swimTimes.slice(0, index + 1);
+            let total = subset.reduce((sum, time) => sum + time, 0);
+            return total / subset.length;
+        });
+
+        function calculateTrendLine(data) {
+            let n = data.length;
+            let sumX = data.reduce((sum, _, i) => sum + i, 0);
+            let sumY = data.reduce((sum, y) => sum + y, 0);
+            let sumXY = data.reduce((sum, y, i) => sum + i * y, 0);
+            let sumXX = data.reduce((sum, _, i) => sum + i * i, 0);
+            let slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            let intercept = (sumY - slope * sumX) / n;
+            return data.map((_, i) => slope * i + intercept);
+        }
+
+        let trendLine = calculateTrendLine(avgTimes);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sessionLabels,
+                datasets: [
+                    {
+                        label: 'ค่าเฉลี่ยเวลาว่ายน้ำ (วินาที)',
+                        data: avgTimes,
+                        borderColor: 'blue',
+                        fill: false,
+                    },
+                    {
+                        label: 'แนวโน้ม (Trend Line)',
+                        data: trendLine,
+                        borderColor: 'green',
+                        borderDash: [5, 5],
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        title: { display: true, text: 'เวลา (วินาที)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'ครั้งที่' }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
