@@ -2,79 +2,76 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>กราฟเวลาการฝึก</title>
+  <title>Swim Training Graph</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body>
   <canvas id="myChart" width="800" height="400"></canvas>
 
   <script>
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
+    fetch("https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:csv")
+      .then(response => response.text())
+      .then(csvText => {
+        const rows = csvText.trim().split("\n").slice(1); // ข้าม header
+        const labels = [];
+        const values = [];
 
-    function drawChart() {
-      const queryString = encodeURIComponent('SELECT A, C, D');
-      const dataSourceUrl = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?sheet=Sheet1&range=A:D&tq=' + queryString;
-
-      fetch(dataSourceUrl)
-        .then(response => response.text())
-        .then(responseText => {
-          const jsonData = JSON.parse(responseText.substring(47).slice(0, -2));
-          const dataTable = new google.visualization.DataTable(jsonData);
-          const data = [];
-
-          for (let i = 0; i < dataTable.getNumberOfRows(); i++) {
-            const date = dataTable.getValue(i, 0);
-            const minutes = Number(dataTable.getValue(i, 1));
-            const seconds = Number(dataTable.getValue(i, 2));
-            const totalSeconds = (minutes * 60) + seconds;
-            const label = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            data.push({ x: date, y: totalSeconds, label: label });
-          }
-
-          renderChart(data);
+        rows.forEach(row => {
+          const [date, stroke, mins, secs] = row.split(",");
+          labels.push(date);
+          const min = parseInt(mins);
+          const sec = parseInt(secs);
+          const formattedTime = `${min}:${sec.toString().padStart(2, "0")}`;
+          values.push({ x: date, y: min * 60 + sec, label: formattedTime });
         });
-    }
 
-    function renderChart(data) {
-      const ctx = document.getElementById('myChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'scatter',
-        data: {
-          datasets: [{
-            label: 'เวลาการฝึก',
-            data: data,
-            backgroundColor: 'rgba(75, 192, 192, 1)'
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              type: 'category',
-              title: {
-                display: true,
-                text: 'วันที่'
+        const ctx = document.getElementById("myChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: [{
+              label: "เวลาฝึก",
+              data: values,
+              parsing: {
+                xAxisKey: "x",
+                yAxisKey: "y"
+              },
+              borderColor: "blue",
+              borderWidth: 2,
+              tension: 0.4
+            }]
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return values[context.dataIndex].label;
+                  }
+                }
               }
             },
-            y: {
-              title: {
-                display: true,
-                text: 'เวลารวม (วินาที)'
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.raw.label;
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "วันที่"
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "เวลา (วินาที)"
                 }
               }
             }
           }
-        }
+        });
       });
+  </script>
+</body>
+</html>
+
     }
   </script>
 </body>
