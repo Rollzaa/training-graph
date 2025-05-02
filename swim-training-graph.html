@@ -21,14 +21,13 @@
     <canvas id="myChart"></canvas>
 
     <script>
-      // URL ของ Google Sheets แบบ Published to Web (CSV)
       const sheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTT5HMe54VZWE2FKmdUOtUO0teIWGeuyQmkKTKcP6rUZDcUNHMcFZJt1OwoILkHCUt_O41aIX1EXBRz/pub?gid=0&single=true&output=csv";
 
       fetch(sheetUrl)
         .then((response) => response.text())
         .then((data) => {
-          const rows = data.split("\n").slice(1); // ตัดหัวตาราง
+          const rows = data.split("\n").slice(1);
           const parsed = rows
             .map((row) => {
               const [date, stroke, min, sec] = row.split(",");
@@ -37,18 +36,20 @@
               const s = parseInt(sec.trim());
               const totalSec = m * 60 + s;
               return {
-                date: date.trim(),
+                dateStr: date.trim(),
                 stroke: stroke.trim(),
                 displayTime: `${m}:${s.toString().padStart(2, "0")}`,
                 totalSec,
+                date: new Date(date.trim()),
               };
             })
             .filter((row) => row !== null);
 
-          // เรียงจากวันล่าสุด -> เก่าสุด แล้ว slice 7 ตัว
-          const last7 = parsed.slice(-7);
+          // เรียงตามวันที่ล่าสุด
+          parsed.sort((a, b) => b.date - a.date);
+          const last7 = parsed.slice(0, 7).reverse(); // เรียงกลับให้วันเก่ามาก่อน
 
-          const labels = last7.map((item) => item.date);
+          const labels = last7.map((item) => item.dateStr);
           const chartData = last7.map((item) => item.totalSec);
           const displayTimes = last7.map((item) => item.displayTime);
 
