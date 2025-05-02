@@ -1,78 +1,88 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Swim Training Graph</title>
+  <meta charset="UTF-8" />
+  <title>กราฟค่าเฉลี่ยเวลาว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background-color: #f9f9f9;
+    }
+    canvas {
+      max-width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <canvas id="myChart" width="800" height="400"></canvas>
+  <h2>กราฟค่าเฉลี่ยเวลาว่ายน้ำ</h2>
+  <canvas id="myChart" width="400" height="200"></canvas>
 
   <script>
-    fetch("https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:csv")
-      .then(response => response.text())
-      .then(csvText => {
-        const rows = csvText.trim().split("\n").slice(1); // ข้าม header
+    // 👉 STEP 1: ลิงก์ Google Sheets
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json";
+
+    // 👉 STEP 2: ดึงข้อมูลและสร้างกราฟ
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(rep => {
+        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
+        const rows = jsonData.table.rows;
+
+        // 👉 STEP 3: เตรียมข้อมูลสำหรับกราฟ
         const labels = [];
-        const values = [];
+        const times = [];
 
         rows.forEach(row => {
-          const [date, stroke, mins, secs] = row.split(",");
+          const date = row.c[0]?.v || "ไม่ระบุ";
+          const mins = row.c[2]?.v || 0;
+          const secs = row.c[3]?.v || 0;
+
+          // สร้าง label เช่น "4/20"
           labels.push(date);
-          const min = parseInt(mins);
-          const sec = parseInt(secs);
-          const formattedTime = `${min}:${sec.toString().padStart(2, "0")}`;
-          values.push({ x: date, y: min * 60 + sec, label: formattedTime });
+
+          // เวลาเป็นวินาทีเพื่อใช้ในกราฟ
+          times.push(mins * 60 + secs);
         });
 
-        const ctx = document.getElementById("myChart").getContext("2d");
+        // 👉 STEP 4: สร้างกราฟ
+        const ctx = document.getElementById('myChart').getContext('2d');
         new Chart(ctx, {
-          type: "line",
+          type: 'line',
           data: {
+            labels: labels,
             datasets: [{
-              label: "เวลาฝึก",
-              data: values,
-              parsing: {
-                xAxisKey: "x",
-                yAxisKey: "y"
-              },
-              borderColor: "blue",
-              borderWidth: 2,
+              label: 'เวลาว่ายน้ำ (วินาที)',
+              data: times,
+              borderColor: 'blue',
+              backgroundColor: 'lightblue',
               tension: 0.4
             }]
           },
           options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return values[context.dataIndex].label;
-                  }
-                }
-              }
-            },
             scales: {
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'วินาที'
+                }
+              },
               x: {
                 title: {
                   display: true,
-                  text: "วันที่"
-                }
-              },
-              y: {
-                title: {
-                  display: true,
-                  text: "เวลา (วินาที)"
+                  text: 'วันที่'
                 }
               }
             }
           }
         });
+      })
+      .catch(error => {
+        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
       });
   </script>
 </body>
 </html>
 
-    }
-  </script>
-</body>
-</html>
