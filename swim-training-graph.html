@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>กราฟค่าเฉลี่ยเวลาว่ายน้ำ</title>
+  <title>กราฟเวลาว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -16,73 +16,96 @@
   </style>
 </head>
 <body>
-  <h2>กราฟค่าเฉลี่ยเวลาว่ายน้ำ</h2>
+  <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
   <canvas id="myChart" width="400" height="200"></canvas>
 
   <script>
-    // 👉 STEP 1: ลิงก์ Google Sheets
+    // STEP 1: ลิงก์ Google Sheets
     const sheetUrl = "https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json";
 
-    // 👉 STEP 2: ดึงข้อมูลและสร้างกราฟ
     fetch(sheetUrl)
       .then(res => res.text())
       .then(rep => {
         const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
         const rows = jsonData.table.rows;
 
-        // 👉 STEP 3: เตรียมข้อมูลสำหรับกราฟ
-        const labels = [];
-        const times = [];
+        // STEP 2: เตรียมข้อมูล
+        const dataPoints = [];
 
         rows.forEach(row => {
-          const date = row.c[0]?.v || "ไม่ระบุ";
-          const mins = row.c[2]?.v || 0;
-          const secs = row.c[3]?.v || 0;
+          const date = row.c[0]?.v || "ไม่ระบุวันที่";
+          const stroke = row.c[1]?.v || "ไม่ระบุท่า";
+          const mins = parseInt(row.c[2]?.v || 0);
+          const secs = parseInt(row.c[3]?.v || 0);
+          const totalSecs = mins * 60 + secs;
 
-          // สร้าง label เช่น "4/20"
-          labels.push(date);
-
-          // เวลาเป็นวินาทีเพื่อใช้ในกราฟ
-          times.push(mins * 60 + secs);
+          dataPoints.push({
+            x: date,
+            y: totalSecs,
+            stroke: stroke,
+            label: `${mins}:${secs.toString().padStart(2, '0')}`
+          });
         });
 
-        // 👉 STEP 4: สร้างกราฟ
-        const ctx = document.getElementById('myChart').getContext('2d');
+        // STEP 3: สร้างกราฟ
+        const ctx = document.getElementById("myChart").getContext("2d");
         new Chart(ctx, {
-          type: 'line',
+          type: "line",
           data: {
-            labels: labels,
             datasets: [{
-              label: 'เวลาว่ายน้ำ (วินาที)',
-              data: times,
-              borderColor: 'blue',
-              backgroundColor: 'lightblue',
+              label: "เวลาว่ายน้ำ",
+              data: dataPoints,
+              parsing: {
+                xAxisKey: "x",
+                yAxisKey: "y"
+              },
+              borderColor: "blue",
+              backgroundColor: "lightblue",
               tension: 0.4
             }]
           },
           options: {
-            scales: {
-              y: {
-                beginAtZero: false,
-                title: {
-                  display: true,
-                  text: 'วินาที'
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const mins = Math.floor(context.parsed.y / 60);
+                    const secs = context.parsed.y % 60;
+                    const stroke = context.raw.stroke;
+                    return `${stroke} - ${mins}:${secs.toString().padStart(2, '0')} นาที`;
+                  }
                 }
-              },
+              }
+            },
+            scales: {
               x: {
                 title: {
                   display: true,
-                  text: 'วันที่'
+                  text: "วันที่"
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "เวลา (นาที:วินาที)"
+                },
+                ticks: {
+                  callback: function(value) {
+                    const mins = Math.floor(value / 60);
+                    const secs = value % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                  }
                 }
               }
             }
           }
         });
       })
-      .catch(error => {
-        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
+      .catch(err => {
+        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", err);
       });
   </script>
 </body>
 </html>
+
 
