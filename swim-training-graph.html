@@ -3,104 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>กราฟเวลาว่ายน้ำ</title>
+  <title>Swimming Training Graph</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>กราฟเวลาการว่ายน้ำ (นาที:วินาที)</h2>
+  <h2 style="text-align:center;">กราฟเวลาการฝึกว่ายน้ำ แยกตามท่า</h2>
   <canvas id="swimChart" width="400" height="200"></canvas>
 
   <script>
-    async function fetchCSVData() {
-      const response = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/pub?gid=1712641251&single=true&output=csv");
-      const data = await response.text();
-      const rows = data.trim().split('\n').slice(1); // ข้ามหัวตาราง
-      const labels = [];
-      const timesInSeconds = [];
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/pub?gid=1712641251&single=true&output=csv";
 
-      rows.forEach((row, index) => {
-        const columns = row.split(',');
-        const date = columns[0]?.trim();
-        const time = columns[2]?.trim(); // ช่องที่ 3 คือเวลา
+    // สีแต่ละท่า
+    const strokeColors = {
+      "ฟรีสไตล์": "blue",
+      "กรรเชียง": "green",
+      "กบ": "orange",
+      "ผีเสื้อ": "purple"
+    };
 
-        if (!time || !time.includes(':')) {
-          console.warn(`❌ ข้อมูลแถว ${index + 2} ไม่ถูกต้อง:`, row);
-          return;
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(data => {
+        const lines = data.trim().split("\n");
+        const headers = lines[0].split(",");
+
+        const dateIndex = headers.indexOf("วันที่");
+        const minIndex = headers.indexOf("นาที");
+        const secIndex = headers.indexOf("วินาที");
+        const styleIndex = headers.indexOf("ท่า");
+
+        const datasetMap = {};
+        const labelsSet = new Set();
+
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(",");
+
+          const date = row[dateIndex];
+          const minutes = parseInt(row[minIndex]);
+          const seconds = parseInt(row[secIndex]);
+          const style = row[styleIndex].trim();
+
+          if (!isNaN(minutes) && !isNaN(seconds) && date && style) {
+            const totalSeconds = minutes * 60 + seconds;
+            labelsSet.add(date);
+
+            if (!datasetMap[style]) {
+              datasetMap[style] = {
+                label: style,
+                data: [],
+                borderColor: strokeColors[style] || getRandomColor(),
+                fill: false,
+                tension: 0.3
+              };
+            }
+
+            datasetMap[style].data.push({ x: date, y: totalSeconds });
+          }
         }
 
-        const [minutes, seconds] = time.split(':').map(Number);
-
-        if (isNaN(minutes) || isNaN(seconds)) {
-          console.warn(`❌ เวลาไม่ใช่ตัวเลข: ${time}`);
-          return;
-        }
-
-        const totalSeconds = minutes * 60 + seconds;
-        labels.push(date);
-        timesInSeconds.push(totalSeconds);
-      });
-
-      return { labels, timesInSeconds };
-    }
-
-    function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    async function createChart() {
-      const { labels, timesInSeconds } = await fetchCSVData();
-
-      const ctx = document.getElementById('swimChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'เวลาการว่ายน้ำ',
-            data: timesInSeconds,
-            borderColor: 'blue',
-            backgroundColor: 'rgba(135, 206, 250, 0.4)',
-            tension: 0.2,
-            pointRadius: 5,
-            fill: true,
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              ticks: {
-                callback: function(value) {
-                  return formatTime(value);
+        const ctx = document.getElementById("swimChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: Object.values(datasetMap)
+          },
+          options: {
+            responsive: true,
+            parsing: false, // ใช้ข้อมูล x, y เอง
+            scales: {
+              x: {
+                type: 'category',
+                title: {
+                  display: true,
+                  text: "วันที่"
                 }
               },
-              title: {
-                display: true,
-                text: 'เวลา (นาที:วินาที)'
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "เวลา (นาที:วินาที)"
+                },
+                ticks: {
+                  callback: function(value) {
+                    const mins = Math.floor(value / 60);
+                    const secs = value % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                  }
+                }
               }
             },
-            x: {
-              title: {
-                display: true,
-                text: 'วันที่'
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return 'เวลา: ' + formatTime(context.raw);
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.raw.y;
+                    const mins = Math.floor(value / 60);
+                    const secs = value % 60;
+                    return `${context.dataset.label}: ${mins}:${secs.toString().padStart(2, '0')}`;
+                  }
                 }
               }
             }
           }
-        }
-      });
-    }
+        });
 
-    createChart();
+        function getRandomColor() {
+          const letters = "0123456789ABCDEF";
+          let color = "#";
+          for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+        }
+      })
+      .catch(error => console.error("เกิดข้อผิดพลาดในการโหลด CSV:", error));
   </script>
 </body>
 </html>
