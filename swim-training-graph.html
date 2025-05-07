@@ -1,106 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>กราฟเวลาเฉลี่ยว่ายน้ำ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>กราฟเวลาว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 1rem;
-    }
-    canvas {
-      max-width: 100%;
-    }
-  </style>
 </head>
 <body>
-  <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
-  <canvas id="myChart" width="400" height="200"></canvas>
+  <h2>กราฟเวลาการว่ายน้ำ (นาที:วินาที)</h2>
+  <canvas id="swimChart" width="400" height="200"></canvas>
 
   <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTYrSE8NScm4hG_XF95V4qYlgkPlG-AoSB--NoNMoMn8DZd7z5N3u4QoyZID49VnKtYecHP_2AkCvAH/pub?gid=0&single=true&output=csv";
+    async function fetchCSVData() {
+      const response = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/pub?gid=1712641251&single=true&output=csv");
+      const data = await response.text();
+      const rows = data.trim().split('\n').slice(1); // ข้ามหัวตาราง
+      const labels = [];
+      const timesInSeconds = [];
 
-    fetch(sheetURL)
-      .then(response => response.text())
-      .then(csv => {
-        const rows = csv.trim().split("\n").slice(1); // ข้ามหัวตาราง
-        const data = rows.map(row => {
-          const [date, stroke, min, sec] = row.split(",");
-          return {
-            date: new Date(date),
-            stroke,
-            timeStr: `${min}:${sec.padStart(2, "0")}`,
-            totalSeconds: parseInt(min) * 60 + parseInt(sec)
-          };
-        });
+      rows.forEach(row => {
+        const [date, style, time] = row.split(',');
+        const [minutes, seconds] = time.split(':').map(Number);
+        const totalSeconds = minutes * 60 + seconds;
 
-        // จัดเรียงวันที่
-        data.sort((a, b) => a.date - b.date);
+        labels.push(date);
+        timesInSeconds.push(totalSeconds);
+      });
 
-        // แยกข้อมูล
-        const labels = data.map(d => d.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
-        const times = data.map(d => d.totalSeconds);
-        const tooltipLabels = data.map(d => `${d.stroke} - ${d.timeStr}`);
+      return { labels, timesInSeconds };
+    }
 
-        const ctx = document.getElementById('myChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'เวลาว่ายน้ำ',
-              data: times,
-              borderColor: 'blue',
-              backgroundColor: 'rgba(0,0,255,0.1)',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 5,
-              pointHoverRadius: 7
-            }]
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return tooltipLabels[context.dataIndex];
-                  }
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async function createChart() {
+      const { labels, timesInSeconds } = await fetchCSVData();
+
+      const ctx = document.getElementById('swimChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'เวลาการว่ายน้ำ (วินาที)',
+            data: timesInSeconds,
+            borderColor: 'blue',
+            backgroundColor: 'lightblue',
+            tension: 0.2,
+            pointRadius: 5
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: function(value) {
+                  return formatTime(value);
                 }
               },
-              legend: {
-                labels: {
-                  font: {
-                    size: 14
-                  }
-                }
+              title: {
+                display: true,
+                text: 'เวลา (นาที:วินาที)'
               }
             },
-            scales: {
-              y: {
-                ticks: {
-                  callback: function(value) {
-                    const minutes = Math.floor(value / 60);
-                    const seconds = value % 60;
-                    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-                  }
-                },
-                title: {
-                  display: true,
-                  text: "เวลา (นาที:วินาที)"
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: "วันที่"
+            x: {
+              title: {
+                display: true,
+                text: 'วันที่'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'เวลา: ' + formatTime(context.raw);
                 }
               }
             }
           }
-        });
+        }
       });
+    }
+
+    createChart();
   </script>
 </body>
 </html>
