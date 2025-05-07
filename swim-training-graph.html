@@ -18,11 +18,24 @@
       const labels = [];
       const timesInSeconds = [];
 
-      rows.forEach(row => {
-        const [date, style, time] = row.split(',');
-        const [minutes, seconds] = time.split(':').map(Number);
-        const totalSeconds = minutes * 60 + seconds;
+      rows.forEach((row, index) => {
+        const columns = row.split(',');
+        const date = columns[0]?.trim();
+        const time = columns[2]?.trim(); // ช่องที่ 3 คือเวลา
 
+        if (!time || !time.includes(':')) {
+          console.warn(`❌ ข้อมูลแถว ${index + 2} ไม่ถูกต้อง:`, row);
+          return;
+        }
+
+        const [minutes, seconds] = time.split(':').map(Number);
+
+        if (isNaN(minutes) || isNaN(seconds)) {
+          console.warn(`❌ เวลาไม่ใช่ตัวเลข: ${time}`);
+          return;
+        }
+
+        const totalSeconds = minutes * 60 + seconds;
         labels.push(date);
         timesInSeconds.push(totalSeconds);
       });
@@ -45,18 +58,18 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'เวลาการว่ายน้ำ (วินาที)',
+            label: 'เวลาการว่ายน้ำ',
             data: timesInSeconds,
             borderColor: 'blue',
-            backgroundColor: 'lightblue',
+            backgroundColor: 'rgba(135, 206, 250, 0.4)',
             tension: 0.2,
-            pointRadius: 5
+            pointRadius: 5,
+            fill: true,
           }]
         },
         options: {
           scales: {
             y: {
-              beginAtZero: false,
               ticks: {
                 callback: function(value) {
                   return formatTime(value);
