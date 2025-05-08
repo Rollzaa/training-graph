@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swim Training Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>Swim Time (7 ล่าสุด)</h2>
+  <canvas id="myChart" width="400" height="200"></canvas>
+
+  <script>
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/pub?gid=1712641251&single=true&output=csv";
+
+    function parseTimeToMinutes(timeStr) {
+      const [min, sec] = timeStr.split(':').map(Number);
+      return min + sec / 60;
+    }
+
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(data => {
+        const rows = data.trim().split('\n').slice(1); // remove header
+        const records = rows.map(row => {
+          const [date, stroke, time] = row.split(',');
+          return { date, stroke, time };
+        });
+
+        // เรียงตามวันที่ และเอาแค่ 7 อันล่าสุด
+        const sorted = records.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const latest7 = sorted.slice(0, 7).reverse();
+
+        const labels = latest7.map(r => `${r.date} (${r.stroke})`);
+        const dataPoints = latest7.map(r => parseTimeToMinutes(r.time));
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'เวลา (นาที)',
+              data: dataPoints,
+              fill: false,
+              borderColor: 'rgb(75, 192, 192)',
+              tension: 0.2
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'เวลา (นาที)'
+                }
+              }
+            }
+          }
+        });
+      });
+  </script>
+</body>
+</html>
