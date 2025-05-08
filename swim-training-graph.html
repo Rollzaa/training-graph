@@ -1,105 +1,109 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>กราฟเวลาว่ายน้ำ</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-      body {
-        font-family: sans-serif;
-        text-align: center;
-        padding: 1em;
-      }
-      canvas {
-        max-width: 90%;
-        height: auto;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
-    <canvas id="myChart"></canvas>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>กราฟเวลาว่ายน้ำ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background-color: #f9f9f9;
+    }
+    canvas {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
+  <canvas id="myChart" width="400" height="200"></canvas>
 
-    <script>
-      const sheetUrl =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTT5HMe54VZWE2FKmdUOtUO0teIWGeuyQmkKTKcP6rUZDcUNHMcFZJt1OwoILkHCUt_O41aIX1EXBRz/pub?gid=0&single=true&output=csv";
+  <script>
+    // STEP 1: ลิงก์ Google Sheets
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json";
 
-      fetch(sheetUrl)
-        .then((response) => response.text())
-        .then((data) => {
-          const rows = data.split("\n").slice(1);
-          const parsed = rows
-            .map((row) => {
-              const [date, stroke, min, sec] = row.split(",");
-              if (!date || !min || !sec) return null;
-              const m = parseInt(min.trim());
-              const s = parseInt(sec.trim());
-              const totalSec = m * 60 + s;
-              return {
-                dateStr: date.trim(),
-                stroke: stroke.trim(),
-                displayTime: `${m}:${s.toString().padStart(2, "0")}`,
-                totalSec,
-                date: new Date(date.trim()),
-              };
-            })
-            .filter((row) => row !== null);
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(rep => {
+        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
+        const rows = jsonData.table.rows;
 
-          // เรียงตามวันที่ล่าสุด
-          parsed.sort((a, b) => b.date - a.date);
-          const last7 = parsed.slice(0, 7).reverse(); // เรียงกลับให้วันเก่ามาก่อน
+        // STEP 2: เตรียมข้อมูล
+        const dataPoints = [];
 
-          const labels = last7.map((item) => item.dateStr);
-          const chartData = last7.map((item) => item.totalSec);
-          const displayTimes = last7.map((item) => item.displayTime);
+        rows.forEach(row => {
+          const date = row.c[0]?.v || "ไม่ระบุวันที่";
+          const stroke = row.c[1]?.v || "ไม่ระบุท่า";
+          const mins = parseInt(row.c[2]?.v || 0);
+          const secs = parseInt(row.c[3]?.v || 0);
+          const totalSecs = mins * 60 + secs;
 
-          const ctx = document.getElementById("myChart").getContext("2d");
-          new Chart(ctx, {
-            type: "line",
-            data: {
-              labels: labels,
-              datasets: [
-                {
-                  label: "เวลาว่ายน้ำ",
-                  data: chartData,
-                  fill: false,
-                  borderColor: "blue",
-                  tension: 0.3,
-                  pointRadius: 5,
-                  pointBackgroundColor: "white",
-                  pointBorderWidth: 2,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      const i = context.dataIndex;
-                      return "เวลา: " + displayTimes[i];
-                    },
-                  },
-                },
-              },
-              scales: {
-                y: {
-                  title: {
-                    display: true,
-                    text: "เวลา (วินาที)",
-                  },
-                },
-                x: {
-                  title: {
-                    display: true,
-                    text: "วันที่",
-                  },
-                },
-              },
-            },
+          dataPoints.push({
+            x: date,
+            y: totalSecs,
+            stroke: stroke,
+            label: `${mins}:${secs.toString().padStart(2, '0')}`
           });
         });
-    </script>
-  </body>
+
+        // STEP 3: สร้างกราฟ
+        const ctx = document.getElementById("myChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: [{
+              label: "เวลาว่ายน้ำ",
+              data: dataPoints,
+              parsing: {
+                xAxisKey: "x",
+                yAxisKey: "y"
+              },
+              borderColor: "blue",
+              backgroundColor: "lightblue",
+              tension: 0.4
+            }]
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const mins = Math.floor(context.parsed.y / 60);
+                    const secs = context.parsed.y % 60;
+                    const stroke = context.raw.stroke;
+                    return `${stroke} - ${mins}:${secs.toString().padStart(2, '0')} นาที`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "วันที่"
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "เวลา (นาที:วินาที)"
+                },
+                ticks: {
+                  callback: function(value) {
+                    const mins = Math.floor(value / 60);
+                    const secs = value % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => {
+        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", err);
+      });
+  </script>
+</body>
 </html>
