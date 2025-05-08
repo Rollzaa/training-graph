@@ -1,77 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <title>Swim Training Graph</title>
+  <meta charset="UTF-8">
+  <title>กราฟเวลาว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>กราฟเวลาเฉลี่ยการว่ายน้ำ (7 รายการล่าสุด)</h2>
-  <canvas id="myChart" width="400" height="200"></canvas>
-
+  <canvas id="myChart"></canvas>
   <script>
-    async function fetchData() {
-      const response = await fetch("https://opensheet.elk.sh/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/Sheet1");
-      const data = await response.json();
+    fetch("https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json")
+      .then(res => res.text())
+      .then(rep => {
+        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
+        const rows = jsonData.table.rows;
 
-      // เก็บรายการ 7 อันล่าสุด
-      const recent = data.slice(-7);
+        const labels = [];
+        const data = [];
 
-      const labels = recent.map(item => `${item.Date} (${item.Stroke})`);
-      const secondsData = recent.map(item => {
-        const mins = parseInt(item.Minutes) || 0;
-        const secs = parseInt(item.Seconds) || 0;
-        return mins * 60 + secs;
-      });
+        rows.forEach(row => {
+          const date = row.c[0]?.v;
+          const minutes = parseInt(row.c[2]?.v) || 0;
+          const seconds = parseInt(row.c[3]?.v) || 0;
+          const totalSeconds = minutes * 60 + seconds;
 
-      const ctx = document.getElementById('myChart').getContext('2d');
+          if (date && totalSeconds) {
+            labels.push(date);
+            data.push(totalSeconds);
+          }
+        });
 
-      const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'เวลา (นาที:วินาที)',
-            data: secondsData,
-            fill: false,
-            borderColor: 'blue',
-            tension: 0.2,
-            pointBackgroundColor: 'blue'
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              ticks: {
-                callback: function(value) {
-                  const mins = Math.floor(value / 60);
-                  const secs = value % 60;
-                  return `${mins}:${secs.toString().padStart(2, '0')}`;
+        const ctx = document.getElementById("myChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "เวลาว่ายน้ำ (วินาที)",
+              data: data,
+              borderColor: "blue",
+              backgroundColor: "lightblue",
+              fill: false
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                title: {
+                  display: true,
+                  text: 'เวลา (วินาที)'
                 }
               },
-              title: {
-                display: true,
-                text: 'เวลา (นาที:วินาที)'
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const value = context.raw;
-                  const mins = Math.floor(value / 60);
-                  const secs = value % 60;
-                  return `เวลา: ${mins}:${secs.toString().padStart(2, '0')}`;
+              x: {
+                title: {
+                  display: true,
+                  text: 'วันที่'
                 }
               }
             }
           }
-        }
+        });
       });
-    }
-
-    fetchData();
   </script>
 </body>
 </html>
