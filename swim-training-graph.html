@@ -1,106 +1,105 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8" />
-  <title>กราฟเวลาเฉลี่ยว่ายน้ำ</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 1rem;
-    }
-    canvas {
-      max-width: 100%;
-    }
-  </style>
-</head>
-<body>
-  <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
-  <canvas id="myChart" width="400" height="200"></canvas>
+  <head>
+    <meta charset="utf-8" />
+    <title>กราฟเวลาว่ายน้ำ</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 1em;
+      }
+      canvas {
+        max-width: 90%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
+    <canvas id="myChart"></canvas>
 
-  <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTYrSE8NScm4hG_XF95V4qYlgkPlG-AoSB--NoNMoMn8DZd7z5N3u4QoyZID49VnKtYecHP_2AkCvAH/pub?gid=0&single=true&output=csv";
+    <script>
+      const sheetUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTT5HMe54VZWE2FKmdUOtUO0teIWGeuyQmkKTKcP6rUZDcUNHMcFZJt1OwoILkHCUt_O41aIX1EXBRz/pub?gid=0&single=true&output=csv";
 
-    fetch(sheetURL)
-      .then(response => response.text())
-      .then(csv => {
-        const rows = csv.trim().split("\n").slice(1); // ข้ามหัวตาราง
-        const data = rows.map(row => {
-          const [date, stroke, min, sec] = row.split(",");
-          return {
-            date: new Date(date),
-            stroke,
-            timeStr: `${min}:${sec.padStart(2, "0")}`,
-            totalSeconds: parseInt(min) * 60 + parseInt(sec)
-          };
-        });
+      fetch(sheetUrl)
+        .then((response) => response.text())
+        .then((data) => {
+          const rows = data.split("\n").slice(1);
+          const parsed = rows
+            .map((row) => {
+              const [date, stroke, min, sec] = row.split(",");
+              if (!date || !min || !sec) return null;
+              const m = parseInt(min.trim());
+              const s = parseInt(sec.trim());
+              const totalSec = m * 60 + s;
+              return {
+                dateStr: date.trim(),
+                stroke: stroke.trim(),
+                displayTime: `${m}:${s.toString().padStart(2, "0")}`,
+                totalSec,
+                date: new Date(date.trim()),
+              };
+            })
+            .filter((row) => row !== null);
 
-        // จัดเรียงวันที่
-        data.sort((a, b) => a.date - b.date);
+          // เรียงตามวันที่ล่าสุด
+          parsed.sort((a, b) => b.date - a.date);
+          const last7 = parsed.slice(0, 7).reverse(); // เรียงกลับให้วันเก่ามาก่อน
 
-        // แยกข้อมูล
-        const labels = data.map(d => d.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
-        const times = data.map(d => d.totalSeconds);
-        const tooltipLabels = data.map(d => `${d.stroke} - ${d.timeStr}`);
+          const labels = last7.map((item) => item.dateStr);
+          const chartData = last7.map((item) => item.totalSec);
+          const displayTimes = last7.map((item) => item.displayTime);
 
-        const ctx = document.getElementById('myChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'เวลาว่ายน้ำ',
-              data: times,
-              borderColor: 'blue',
-              backgroundColor: 'rgba(0,0,255,0.1)',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 5,
-              pointHoverRadius: 7
-            }]
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return tooltipLabels[context.dataIndex];
-                  }
-                }
-              },
-              legend: {
-                labels: {
-                  font: {
-                    size: 14
-                  }
-                }
-              }
-            },
-            scales: {
-              y: {
-                ticks: {
-                  callback: function(value) {
-                    const minutes = Math.floor(value / 60);
-                    const seconds = value % 60;
-                    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-                  }
+          const ctx = document.getElementById("myChart").getContext("2d");
+          new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "เวลาว่ายน้ำ",
+                  data: chartData,
+                  fill: false,
+                  borderColor: "blue",
+                  tension: 0.3,
+                  pointRadius: 5,
+                  pointBackgroundColor: "white",
+                  pointBorderWidth: 2,
                 },
-                title: {
-                  display: true,
-                  text: "เวลา (นาที:วินาที)"
-                }
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const i = context.dataIndex;
+                      return "เวลา: " + displayTimes[i];
+                    },
+                  },
+                },
               },
-              x: {
-                title: {
-                  display: true,
-                  text: "วันที่"
-                }
-              }
-            }
-          }
+              scales: {
+                y: {
+                  title: {
+                    display: true,
+                    text: "เวลา (วินาที)",
+                  },
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "วันที่",
+                  },
+                },
+              },
+            },
+          });
         });
-      });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
