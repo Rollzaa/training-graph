@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>กราฟแยกท่าว่ายน้ำ</title>
+    <title>กราฟเวลาว่ายน้ำ</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       google.charts.load('current', {packages: ['corechart']});
@@ -20,10 +20,10 @@
           }
 
           const rawData = response.getDataTable();
-          const strokes = new Set();
-
-          // เตรียมเก็บข้อมูลตามท่า
-          const rowMap = new Map(); // date string => { stroke: time }
+          const data = new google.visualization.DataTable();
+          data.addColumn('date', 'วันที่');
+          data.addColumn('number', 'เวลา (วินาที)');
+          data.addColumn({type: 'string', role: 'tooltip'});
 
           for (let i = 0; i < rawData.getNumberOfRows(); i++) {
             const dateStr = rawData.getValue(i, 0);
@@ -31,56 +31,38 @@
             const min = rawData.getValue(i, 2);
             const sec = rawData.getValue(i, 3);
 
-            if (!dateStr || min == null || sec == null || !stroke) continue;
+            if (!dateStr || min == null || sec == null) continue;
 
-            strokes.add(stroke);
-
-            if (!rowMap.has(dateStr)) {
-              rowMap.set(dateStr, {});
+            const dateParts = dateStr.split('/'); // สมมติเป็น MM/DD หรือ DD/MM
+            let dateObj;
+            if (dateParts[2]) {
+              // ถ้าเป็น DD/MM/YYYY
+              dateObj = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
+            } else {
+              // fallback
+              dateObj = new Date(dateStr);
             }
 
-            const timeInSec = min * 60 + sec;
-            rowMap.get(dateStr)[stroke] = timeInSec;
+            const totalSec = min * 60 + sec;
+            const tooltip = `วันที่: ${dateStr}\nท่า: ${stroke}\nเวลา: ${min}:${sec.toString().padStart(2, '0')} นาที`;
+            data.addRow([dateObj, totalSec, tooltip]);
           }
 
-          const strokeList = Array.from(strokes);
-          const data = new google.visualization.DataTable();
-          data.addColumn('string', 'วันที่');
-
-          strokeList.forEach(stroke => {
-            data.addColumn('number', stroke);
-            data.addColumn({ type: 'string', role: 'tooltip' });
-          });
-
-          [...rowMap.entries()].forEach(([date, strokeData]) => {
-            const row = [date];
-            strokeList.forEach(stroke => {
-              if (strokeData[stroke] != null) {
-                const time = strokeData[stroke];
-                const m = Math.floor(time / 60);
-                const s = time % 60;
-                const label = `ท่า: ${stroke}\nเวลา: ${m}:${s.toString().padStart(2, '0')}`;
-                row.push(time, label);
-              } else {
-                row.push(null, null);
-              }
-            });
-            data.addRow(row);
-          });
-
           const options = {
-            title: 'เวลาว่ายน้ำแยกตามท่า',
+            title: 'เวลาว่ายน้ำต่อวัน',
             curveType: 'function',
             pointSize: 6,
-            hAxis: { title: 'วันที่' },
+            legend: 'none',
+            hAxis: {
+              title: 'วันที่',
+              format: 'dd/MM',
+              gridlines: { count: -1 }
+            },
             vAxis: {
               title: 'เวลา (วินาที)',
-              format: 'short',
               minValue: 0
             },
-            tooltip: { isHtml: true },
-            legend: { position: 'bottom' },
-            colors: ['#1E90FF', '#FF69B4', '#32CD32', '#FFA500']
+            tooltip: { isHtml: true }
           };
 
           const chart = new google.visualization.LineChart(document.getElementById('chart_div'));
@@ -90,7 +72,7 @@
     </script>
   </head>
   <body>
-    <h2>กราฟแยกตามท่าว่ายน้ำ (พร้อมชื่อท่า + เวลา)</h2>
+    <h2>กราฟเวลาว่ายน้ำ (เรียงวัน + มีจุด)</h2>
     <div id="chart_div" style="width: 100%; height: 500px;"></div>
   </body>
 </html>
