@@ -1,123 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Swimming Training Graph</title>
+  <title>กราฟเวลาเฉลี่ยว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 1rem;
+    }
+    canvas {
+      max-width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <h2 style="text-align:center;">กราฟเวลาการฝึกว่ายน้ำ แยกตามท่า</h2>
-  <canvas id="swimChart" width="400" height="200"></canvas>
+  <h2>กราฟเวลาว่ายน้ำ (แสดงเป็น นาที:วินาที)</h2>
+  <canvas id="myChart" width="400" height="200"></canvas>
 
   <script>
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/pub?gid=1712641251&single=true&output=csv";
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTYrSE8NScm4hG_XF95V4qYlgkPlG-AoSB--NoNMoMn8DZd7z5N3u4QoyZID49VnKtYecHP_2AkCvAH/pub?gid=0&single=true&output=csv";
 
-    // สีแต่ละท่า
-    const strokeColors = {
-      "ฟรีสไตล์": "blue",
-      "กรรเชียง": "green",
-      "กบ": "orange",
-      "ผีเสื้อ": "purple"
-    };
-
-    fetch(csvUrl)
+    fetch(sheetURL)
       .then(response => response.text())
-      .then(data => {
-        const lines = data.trim().split("\n");
-        const headers = lines[0].split(",");
+      .then(csv => {
+        const rows = csv.trim().split("\n").slice(1); // ข้ามหัวตาราง
+        const data = rows.map(row => {
+          const [date, stroke, min, sec] = row.split(",");
+          return {
+            date: new Date(date),
+            stroke,
+            timeStr: `${min}:${sec.padStart(2, "0")}`,
+            totalSeconds: parseInt(min) * 60 + parseInt(sec)
+          };
+        });
 
-        const dateIndex = headers.indexOf("วันที่");
-        const minIndex = headers.indexOf("นาที");
-        const secIndex = headers.indexOf("วินาที");
-        const styleIndex = headers.indexOf("ท่า");
+        // จัดเรียงวันที่
+        data.sort((a, b) => a.date - b.date);
 
-        const datasetMap = {};
-        const labelsSet = new Set();
+        // แยกข้อมูล
+        const labels = data.map(d => d.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
+        const times = data.map(d => d.totalSeconds);
+        const tooltipLabels = data.map(d => `${d.stroke} - ${d.timeStr}`);
 
-        for (let i = 1; i < lines.length; i++) {
-          const row = lines[i].split(",");
-
-          const date = row[dateIndex];
-          const minutes = parseInt(row[minIndex]);
-          const seconds = parseInt(row[secIndex]);
-          const style = row[styleIndex].trim();
-
-          if (!isNaN(minutes) && !isNaN(seconds) && date && style) {
-            const totalSeconds = minutes * 60 + seconds;
-            labelsSet.add(date);
-
-            if (!datasetMap[style]) {
-              datasetMap[style] = {
-                label: style,
-                data: [],
-                borderColor: strokeColors[style] || getRandomColor(),
-                fill: false,
-                tension: 0.3
-              };
-            }
-
-            datasetMap[style].data.push({ x: date, y: totalSeconds });
-          }
-        }
-
-        const ctx = document.getElementById("swimChart").getContext("2d");
+        const ctx = document.getElementById('myChart').getContext('2d');
         new Chart(ctx, {
-          type: "line",
+          type: 'line',
           data: {
-            datasets: Object.values(datasetMap)
+            labels: labels,
+            datasets: [{
+              label: 'เวลาว่ายน้ำ',
+              data: times,
+              borderColor: 'blue',
+              backgroundColor: 'rgba(0,0,255,0.1)',
+              fill: false,
+              tension: 0.3,
+              pointRadius: 5,
+              pointHoverRadius: 7
+            }]
           },
           options: {
-            responsive: true,
-            parsing: false, // ใช้ข้อมูล x, y เอง
-            scales: {
-              x: {
-                type: 'category',
-                title: {
-                  display: true,
-                  text: "วันที่"
-                }
-              },
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: "เวลา (นาที:วินาที)"
-                },
-                ticks: {
-                  callback: function(value) {
-                    const mins = Math.floor(value / 60);
-                    const secs = value % 60;
-                    return `${mins}:${secs.toString().padStart(2, '0')}`;
-                  }
-                }
-              }
-            },
             plugins: {
               tooltip: {
                 callbacks: {
                   label: function(context) {
-                    const value = context.raw.y;
-                    const mins = Math.floor(value / 60);
-                    const secs = value % 60;
-                    return `${context.dataset.label}: ${mins}:${secs.toString().padStart(2, '0')}`;
+                    return tooltipLabels[context.dataIndex];
                   }
+                }
+              },
+              legend: {
+                labels: {
+                  font: {
+                    size: 14
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                ticks: {
+                  callback: function(value) {
+                    const minutes = Math.floor(value / 60);
+                    const seconds = value % 60;
+                    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+                  }
+                },
+                title: {
+                  display: true,
+                  text: "เวลา (นาที:วินาที)"
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: "วันที่"
                 }
               }
             }
           }
         });
-
-        function getRandomColor() {
-          const letters = "0123456789ABCDEF";
-          let color = "#";
-          for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-          }
-          return color;
-        }
-      })
-      .catch(error => console.error("เกิดข้อผิดพลาดในการโหลด CSV:", error));
+      });
   </script>
 </body>
 </html>
