@@ -2,28 +2,40 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>กราฟเวลาว่ายน้ำ</title>
+  <title>กราฟฝึกว่ายน้ำ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
 </head>
 <body>
+  <h2>กราฟเวลาในการฝึกว่ายน้ำ</h2>
   <canvas id="myChart"></canvas>
+
   <script>
     fetch("https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json")
       .then(res => res.text())
       .then(rep => {
-        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
-        const rows = jsonData.table.rows;
+        const json = JSON.parse(rep.substr(47).slice(0, -2));
+        const rows = json.table.rows;
 
         const labels = [];
         const data = [];
 
         rows.forEach(row => {
-          const date = row.c[0]?.v;
-          const minutes = parseInt(row.c[2]?.v) || 0;
-          const seconds = parseInt(row.c[3]?.v) || 0;
-          const totalSeconds = minutes * 60 + seconds;
+          const date = row.c[0]?.f; // วันที่
+          const minutes = parseInt(row.c[2]?.v || 0); // คอลัมน์ "Minutes"
+          const seconds = parseInt(row.c[3]?.v || 0); // คอลัมน์ "Seconds"
 
-          if (date && totalSeconds) {
+          if (date && (!isNaN(minutes) || !isNaN(seconds))) {
+            const totalSeconds = minutes * 60 + seconds;
             labels.push(date);
             data.push(totalSeconds);
           }
@@ -31,18 +43,19 @@
 
         const ctx = document.getElementById("myChart").getContext("2d");
         new Chart(ctx, {
-          type: "line",
+          type: 'line',
           data: {
             labels: labels,
             datasets: [{
-              label: "เวลาว่ายน้ำ (วินาที)",
+              label: 'เวลาว่ายน้ำ (วินาที)',
               data: data,
-              borderColor: "blue",
-              backgroundColor: "lightblue",
-              fill: false
+              fill: false,
+              borderColor: 'blue',
+              tension: 0.3
             }]
           },
           options: {
+            responsive: true,
             scales: {
               y: {
                 title: {
