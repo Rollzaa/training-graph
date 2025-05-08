@@ -1,78 +1,68 @@
 <!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <title>กราฟฝึกว่ายน้ำ</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-  </style>
-</head>
-<body>
-  <h2>กราฟเวลาในการฝึกว่ายน้ำ</h2>
-  <canvas id="myChart"></canvas>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Swimming Training Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <canvas id="myChart" width="400" height="200"></canvas>
 
-  <script>
-    fetch("https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json")
-      .then(res => res.text())
-      .then(rep => {
-        const json = JSON.parse(rep.substr(47).slice(0, -2));
-        const rows = json.table.rows;
+    <script>
+      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXQPJcv3QOojPp1uw4-lpD_i0d3KnHRgdCibq9T23VsMS75Fe_wDEQG7_7sFFhowP6Jy7lJCvPDw4r/gviz/tq?tqx=out:json';
 
-        const labels = [];
-        const data = [];
+      fetch(sheetURL)
+        .then(response => response.text())
+        .then(dataText => {
+          const json = JSON.parse(dataText.substring(47).slice(0, -2));
+          const rows = json.table.rows;
 
-        rows.forEach(row => {
-          const date = row.c[0]?.f; // วันที่
-          const minutes = parseInt(row.c[2]?.v || 0); // คอลัมน์ "Minutes"
-          const seconds = parseInt(row.c[3]?.v || 0); // คอลัมน์ "Seconds"
+          const labels = [];
+          const times = [];
 
-          if (date && (!isNaN(minutes) || !isNaN(seconds))) {
-            const totalSeconds = minutes * 60 + seconds;
-            labels.push(date);
-            data.push(totalSeconds);
-          }
-        });
+          rows.forEach(row => {
+            const date = row.c[0]?.v;
+            const stroke = row.c[1]?.v;
+            const timeStr = row.c[2]?.v; // format: mm:ss
 
-        const ctx = document.getElementById("myChart").getContext("2d");
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'เวลาว่ายน้ำ (วินาที)',
-              data: data,
-              fill: false,
-              borderColor: 'blue',
-              tension: 0.3
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                title: {
-                  display: true,
-                  text: 'เวลา (วินาที)'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'วันที่'
+            if (date && stroke && timeStr) {
+              // Extract label and convert time to float
+              labels.push(`${date} (${stroke})`);
+              const [min, sec] = timeStr.split(":").map(Number);
+              const totalMinutes = min + sec / 60;
+              times.push(totalMinutes);
+            }
+          });
+
+          const ctx = document.getElementById('myChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Swimming Time (minutes)',
+                data: times,
+                fill: false,
+                borderColor: 'blue',
+                tension: 0.1
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  title: {
+                    display: true,
+                    text: 'Time (minutes)'
+                  }
                 }
               }
             }
-          }
+          });
+        })
+        .catch(error => {
+          console.error('Error loading data:', error);
         });
-      });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
