@@ -5,40 +5,54 @@
     <title>กราฟเวลาว่ายน้ำ</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
-      // โหลด Google Charts
-      google.charts.load('current', {'packages':['corechart']});
+      google.charts.load('current', {packages: ['corechart']});
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-        // ดึงข้อมูลจาก Google Sheets
-        var queryString = encodeURIComponent('SELECT A, (C*60 + D) LABEL (C*60 + D) "Time (s)"');
-        var dataSourceUrl = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?sheet=Sheet1&headers=1&tq=' + queryString;
+        const queryString = encodeURIComponent('SELECT A, B, C, D');
+        const dataSourceUrl = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?sheet=Sheet1&headers=1&tq=' + queryString;
 
-        var query = new google.visualization.Query(dataSourceUrl);
+        const query = new google.visualization.Query(dataSourceUrl);
         query.send(function(response) {
           if (response.isError()) {
             console.error('Error: ' + response.getMessage() + ' ' + response.getDetailedMessage());
             return;
           }
 
-          var data = response.getDataTable();
+          const rawData = response.getDataTable();
+          const data = new google.visualization.DataTable();
+          data.addColumn('string', 'วันที่');
+          data.addColumn('number', 'เวลา (วินาที)');
+          data.addColumn({type: 'string', role: 'tooltip'});
 
-          var options = {
-            title: 'เวลาว่ายน้ำต่อวัน (วินาที)',
+          for (let i = 0; i < rawData.getNumberOfRows(); i++) {
+            const date = rawData.getValue(i, 0);
+            const stroke = rawData.getValue(i, 1);
+            const min = rawData.getValue(i, 2);
+            const sec = rawData.getValue(i, 3);
+            const totalSec = min * 60 + sec;
+            const tooltip = `วันที่: ${date}\nท่า: ${stroke}\nเวลา: ${min}:${sec.toString().padStart(2, '0')} นาที`;
+            data.addRow([date, totalSec, tooltip]);
+          }
+
+          const options = {
+            title: 'เวลาว่ายน้ำต่อวัน (พร้อมท่า)',
             curveType: 'function',
-            legend: { position: 'bottom' },
+            pointSize: 6,
+            legend: 'none',
             hAxis: { title: 'วันที่' },
-            vAxis: { title: 'เวลา (วินาที)' }
+            vAxis: { title: 'เวลา (วินาที)' },
+            tooltip: { isHtml: true }
           };
 
-          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+          const chart = new google.visualization.LineChart(document.getElementById('chart_div'));
           chart.draw(data, options);
         });
       }
     </script>
   </head>
   <body>
-    <h2>กราฟเวลาว่ายน้ำ</h2>
+    <h2>กราฟเวลาว่ายน้ำ (มี tooltip)</h2>
     <div id="chart_div" style="width: 100%; height: 500px;"></div>
   </body>
 </html>
