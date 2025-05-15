@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Freestyle Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>Freestyle</h2>
+  <canvas id="chart" width="400" height="200"></canvas>
+  <script>
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json&sheet=Sheet1';
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(rep => {
+        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
+        const rows = jsonData.table.rows;
+
+        const labels = [];
+        const data = [];
+
+        rows.forEach(row => {
+          const stroke = row.c[1]?.v;
+          const minutes = parseInt(row.c[3]?.v || 0);
+          const seconds = parseInt(row.c[4]?.v || 0);
+          const date = row.c[0]?.v;
+
+          if (stroke === "Freestyle") {
+            labels.push(date);
+            data.push(minutes * 60 + seconds);
+          }
+        });
+
+        new Chart(document.getElementById("chart"), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Time (sec)',
+              data: data,
+              borderColor: 'blue',
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false
+              }
+            }
+          }
+        });
+      });
+  </script>
+</body>
+</html>
