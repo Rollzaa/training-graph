@@ -24,36 +24,68 @@
 
         json.table.rows.forEach(row => {
           const date = row.c[0]?.v || '';
-          const seconds = parseFloat(row.c[1]?.v);
+          const seconds = parseFloat(row.c[1]?.v); // วินาทีเต็มจากชีต
           if (!isNaN(seconds)) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.round(seconds % 60).toString().padStart(2, '0');
             labels.push(date);
-            data.push(parseFloat(`${min}.${sec}`));
+            data.push(seconds);
           }
         });
 
-        new Chart(document.getElementById('chart'), {
+        const ctx = document.getElementById('chart').getContext('2d');
+
+        new Chart(ctx, {
           type: 'line',
           data: {
             labels,
             datasets: [{
-              label: 'เวลาท่าฟรีสไตล์ (นาที.วินาที)',
+              label: 'เวลาท่าฟรีสไตล์ (นาที:วินาที)',
               data,
               borderColor: 'rgba(54, 162, 235, 1)',
               backgroundColor: 'rgba(54, 162, 235, 0.2)',
               fill: true,
-              tension: 0.3
+              tension: 0.3,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              // ให้จุดเป็นวงกลมชัดเจน
+              pointBackgroundColor: 'rgba(54, 162, 235, 1)'
             }]
           },
           options: {
             responsive: true,
             scales: {
               y: {
-                title: { display: true, text: 'เวลา (นาที.วินาที)' }
+                title: { display: true, text: 'เวลา (วินาที)' },
+                beginAtZero: true,
+                ticks: {
+                  // แปลงเลขวินาทีให้แสดงเป็นนาที:วินาที ในแกน Y ก็ได้ (ถ้าต้องการ)
+                  callback: function(value) {
+                    const min = Math.floor(value / 60);
+                    const sec = value % 60;
+                    return min + ':' + sec.toString().padStart(2, '0');
+                  }
+                }
               },
               x: {
                 title: { display: true, text: 'วันที่' }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const seconds = context.parsed.y;
+                    const min = Math.floor(seconds / 60);
+                    const sec = Math.round(seconds % 60);
+                    return `เวลา: ${min}:${sec.toString().padStart(2, '0')}`;
+                  },
+                  title: function(context) {
+                    return `วันที่: ${context[0].label}`;
+                  }
+                }
+              },
+              legend: {
+                display: true,
+                position: 'bottom'
               }
             }
           }
