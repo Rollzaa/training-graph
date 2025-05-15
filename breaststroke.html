@@ -1,74 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Breaststroke Graph</title>
+  <title>Breaststroke Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Breaststroke Graph</h2>
-  <canvas id="myChart" width="400" height="200"></canvas>
-
+  <canvas id="chart" width="400" height="200"></canvas>
   <script>
-    async function fetchData() {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json';
-      const response = await fetch(sheetURL);
-      const text = await response.text();
-      const json = JSON.parse(text.substr(47).slice(0, -2));
+    const sheetURL = 'https://opensheet.elk.sh/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/Sheet1';
 
-      const labels = [];
-      const data = [];
-
-      json.table.rows.forEach(row => {
-        const date = row.c[0]?.v;
-        const stroke = row.c[1]?.v;
-        const minutes = row.c[2]?.v || 0;
-        const seconds = row.c[3]?.v || 0;
-
-        if (stroke === "Breaststroke") {
-          labels.push(date);
-          data.push(minutes * 60 + seconds);
-        }
-      });
-
-      renderChart(labels, data);
+    function convertTimeToSeconds(timeString) {
+      const [minutes, seconds] = timeString.split(':').map(Number);
+      return minutes * 60 + seconds;
     }
 
-    function renderChart(labels, data) {
-      const ctx = document.getElementById('myChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Time (seconds)',
-            data: data,
-            borderColor: 'green',
-            tension: 0.2,
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              title: {
-                display: true,
-                text: 'Time (seconds)'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Date'
+    fetch(sheetURL)
+      .then(response => response.json())
+      .then(data => {
+        const filteredData = data.filter(row => row.stroke === 'breaststroke');
+        const labels = filteredData.map(row => row.date);
+        const times = filteredData.map(row => convertTimeToSeconds(row.time));
+
+        new Chart(document.getElementById('chart'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Breaststroke Time (seconds)',
+              data: times,
+              borderColor: 'green',
+              fill: false,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false
               }
             }
           }
-        }
+        });
       });
-    }
-
-    fetchData();
   </script>
 </body>
 </html>
