@@ -1,81 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>กราฟท่าฟรีสไตล์</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 30px;
+    }
+    canvas {
+      max-width: 800px;
+    }
+  </style>
 </head>
 <body>
-  <h2>กราฟท่าฟรีสไตล์</h2>
-  <canvas id="chart"></canvas>
+
+  <h2><b>กราฟท่าฟรีสไตล์</b></h2>
+  <canvas id="freestyleChart"></canvas>
 
   <script>
-    const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
-    const sheetName = 'Sheet_freestyle';
-    const query = encodeURIComponent('SELECT A, D');
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+    const ctx = document.getElementById('freestyleChart').getContext('2d');
 
-    // ฟังก์ชันแปลงวินาทีเป็น นาที:วินาที
-    function formatMinSec(seconds) {
-      const min = Math.floor(seconds / 60);
-      const sec = seconds % 60;
-      return `${min}:${sec.toString().padStart(2, '0')}`;
-    }
+    // ข้อมูลตัวอย่างแบบรวม นาทีและวินาทีเป็นทศนิยม (Minutes + Seconds/60)
+    const labels = ['2025-05-13', '2025-05-14', '2025-05-15'];
+    const times = [1.75, 2.0, 2.5167]; // 1:45, 2:00, 2:31
 
-    fetch(url)
-      .then(res => res.text())
-      .then(rep => {
-        const json = JSON.parse(rep.substring(47).slice(0, -2));
-        const labels = [];
-        const data = [];
-
-        json.table.rows.forEach(row => {
-          const date = row.c[0]?.v || '';
-          const seconds = parseInt(row.c[1]?.v);
-          if (!isNaN(seconds)) {
-            labels.push(date);
-            data.push(seconds);  // เก็บข้อมูลเป็นวินาทีเต็ม
-          }
-        });
-
-        new Chart(document.getElementById('chart'), {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'เวลาท่าฟรีสไตล์ (วินาที)',
-              data,
-              borderColor: 'rgba(54, 162, 235, 1)',
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              fill: true,
-              tension: 0.3,
-              pointRadius: 5
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                title: { display: true, text: 'เวลา (วินาที)' },
-                beginAtZero: true
-              },
-              x: {
-                title: { display: true, text: 'วันที่' }
-              }
+    const freestyleChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'เวลาท่าฟรีสไตล์ (นาที)',
+          data: times,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: 'เวลา (นาที:วินาที)'
             },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: context => {
-                    const seconds = context.parsed.y;
-                    return `เวลา: ${formatMinSec(seconds)}`;
-                  }
-                }
+            ticks: {
+              callback: function(value) {
+                const minutes = Math.floor(value);
+                const seconds = Math.round((value - minutes) * 60);
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
               }
             }
           }
-        });
-      });
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed.y;
+                const minutes = Math.floor(value);
+                const seconds = Math.round((value - minutes) * 60);
+                return `เวลา: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+              }
+            }
+          }
+        }
+      }
+    });
   </script>
+
 </body>
 </html>
