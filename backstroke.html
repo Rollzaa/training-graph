@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Breaststroke Graph</title>
+  <title>Backstroke Graph</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Breaststroke Graph</h2>
+  <h2>Backstroke Graph</h2>
   <canvas id="myChart" width="400" height="200"></canvas>
 
   <script>
@@ -25,7 +25,7 @@
         const minutes = row.c[2]?.v || 0;
         const seconds = row.c[3]?.v || 0;
 
-        if (stroke === "Breaststroke") {
+        if (stroke === "Backstroke") {
           labels.push(date);
           data.push(minutes * 60 + seconds);
         }
@@ -43,7 +43,7 @@
           datasets: [{
             label: 'Time (seconds)',
             data: data,
-            borderColor: 'green',
+            borderColor: 'purple',
             tension: 0.2,
             fill: false
           }]
