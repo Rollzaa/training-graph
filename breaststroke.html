@@ -1,30 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Breaststroke Chart</title>
+  <meta charset="UTF-8">
+  <title>กราฟท่ากบ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Breaststroke</h2>
-  <canvas id="chart" width="400" height="200"></canvas>
+  <h2>กราฟท่ากบ</h2>
+  <canvas id="chart"></canvas>
+
   <script>
-    fetch("https://opensheet.elk.sh/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/Sheet2")
-      .then((response) => response.json())
-      .then((data) => {
-        const breaststrokeData = data.filter(row => row["Stroke Type"] === "breaststroke");
-        const labels = breaststrokeData.map(row => row["Date"]);
-        const times = breaststrokeData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
-        new Chart(document.getElementById("chart"), {
-          type: "line",
+    const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
+    const sheetName = 'Sheet_breaststroke';
+    const query = encodeURIComponent('SELECT A, D');
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+    fetch(url)
+      .then(res => res.text())
+      .then(rep => {
+        const json = JSON.parse(rep.substring(47).slice(0, -2));
+        const labels = [];
+        const data = [];
+
+        json.table.rows.forEach(row => {
+          const date = row.c[0]?.v || '';
+          const seconds = parseFloat(row.c[1]?.v);
+          if (!isNaN(seconds)) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.round(seconds % 60).toString().padStart(2, '0');
+            labels.push(date);
+            data.push(parseFloat(`${min}.${sec}`));
+          }
+        });
+
+        new Chart(document.getElementById('chart'), {
+          type: 'line',
           data: {
-            labels: labels,
+            labels,
             datasets: [{
-              label: "Breaststroke Time (seconds)",
-              data: times,
-              borderColor: "green",
-              borderWidth: 2,
-              fill: false
+              label: 'เวลาท่ากบ (นาที.วินาที)',
+              data,
+              borderColor: 'rgba(255, 206, 86, 1)',
+              backgroundColor: 'rgba(255, 206, 86, 0.2)',
+              fill: true,
+              tension: 0.3
             }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                title: { display: true, text: 'เวลา (นาที.วินาที)' }
+              },
+              x: {
+                title: { display: true, text: 'วันที่' }
+              }
+            }
           }
         });
       });
