@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>กราฟท่าผีเสื้อ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>กราฟท่าผีเสื้อ</h2>
-  <canvas id="chart"></canvas>
+
+  <h2><b>กราฟท่าผีเสื้อ</b></h2>
+  <canvas id="butterflyChart"></canvas>
 
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
     const sheetName = 'Sheet_butterfly';
-    const query = encodeURIComponent('SELECT A, D');
+    const query = encodeURIComponent('SELECT A, C, D');
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
     fetch(url)
@@ -23,27 +24,28 @@
         const data = [];
 
         json.table.rows.forEach(row => {
-          const date = row.c[0]?.v || '';
-          const seconds = parseFloat(row.c[1]?.v);
-          if (!isNaN(seconds)) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.round(seconds % 60).toString().padStart(2, '0');
+          const date = row.c[0]?.v;
+          const minutes = parseInt(row.c[1]?.v || 0);
+          const seconds = parseInt(row.c[2]?.v || 0);
+          if (date && !isNaN(minutes) && !isNaN(seconds)) {
             labels.push(date);
-            data.push(parseFloat(`${min}.${sec}`));
+            data.push(minutes * 60 + seconds);
           }
         });
 
-        new Chart(document.getElementById('chart'), {
+        new Chart(document.getElementById('butterflyChart'), {
           type: 'line',
           data: {
-            labels,
+            labels: labels,
             datasets: [{
-              label: 'เวลาท่าผีเสื้อ (นาที.วินาที)',
-              data,
-              borderColor: 'rgba(255, 99, 132, 1)',
-              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              label: 'เวลาท่าผีเสื้อ (นาที:วินาที)',
+              data: data,
+              backgroundColor: 'rgba(153, 102, 255, 0.2)',
+              borderColor: 'rgba(153, 102, 255, 1)',
+              borderWidth: 2,
               fill: true,
-              tension: 0.3
+              pointRadius: 5,
+              pointHoverRadius: 7
             }]
           },
           options: {
@@ -52,7 +54,14 @@
               y: {
                 title: {
                   display: true,
-                  text: 'เวลา (นาที.วินาที)'
+                  text: 'เวลา (นาที:วินาที)'
+                },
+                ticks: {
+                  callback: function(value) {
+                    const minutes = Math.floor(value / 60);
+                    const seconds = Math.round(value % 60);
+                    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                  }
                 }
               },
               x: {
@@ -61,10 +70,23 @@
                   text: 'วันที่'
                 }
               }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    const minutes = Math.floor(value / 60);
+                    const seconds = Math.round(value % 60);
+                    return `เวลา: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                  }
+                }
+              }
             }
           }
         });
       });
   </script>
+
 </body>
 </html>
