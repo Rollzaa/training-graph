@@ -5,41 +5,32 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Freestyle</h2>
   <canvas id="chart" width="400" height="200"></canvas>
   <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/gviz/tq?tqx=out:json&sheet=Sheet1';
+    const sheetURL = 'https://opensheet.elk.sh/1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0/Sheet1';
+
+    function convertTimeToSeconds(timeString) {
+      const [minutes, seconds] = timeString.split(':').map(Number);
+      return minutes * 60 + seconds;
+    }
 
     fetch(sheetURL)
-      .then(res => res.text())
-      .then(rep => {
-        const jsonData = JSON.parse(rep.substr(47).slice(0, -2));
-        const rows = jsonData.table.rows;
+      .then(response => response.json())
+      .then(data => {
+        const filteredData = data.filter(row => row.stroke === 'freestyle');
+        const labels = filteredData.map(row => row.date);
+        const times = filteredData.map(row => convertTimeToSeconds(row.time));
 
-        const labels = [];
-        const data = [];
-
-        rows.forEach(row => {
-          const stroke = row.c[1]?.v;
-          const minutes = parseInt(row.c[3]?.v || 0);
-          const seconds = parseInt(row.c[4]?.v || 0);
-          const date = row.c[0]?.v;
-
-          if (stroke === "Freestyle") {
-            labels.push(date);
-            data.push(minutes * 60 + seconds);
-          }
-        });
-
-        new Chart(document.getElementById("chart"), {
+        new Chart(document.getElementById('chart'), {
           type: 'line',
           data: {
             labels: labels,
             datasets: [{
-              label: 'Time (sec)',
-              data: data,
+              label: 'Freestyle Time (seconds)',
+              data: times,
               borderColor: 'blue',
-              fill: false
+              fill: false,
+              tension: 0.2
             }]
           },
           options: {
