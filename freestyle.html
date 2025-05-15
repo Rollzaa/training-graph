@@ -15,6 +15,13 @@
     const query = encodeURIComponent('SELECT A, D');
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
+    // ฟังก์ชันแปลงวินาทีเป็น นาที:วินาที
+    function formatMinSec(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${min}:${sec.toString().padStart(2, '0')}`;
+    }
+
     fetch(url)
       .then(res => res.text())
       .then(rep => {
@@ -24,30 +31,25 @@
 
         json.table.rows.forEach(row => {
           const date = row.c[0]?.v || '';
-          const seconds = parseFloat(row.c[1]?.v); // วินาทีเต็มจากชีต
+          const seconds = parseInt(row.c[1]?.v);
           if (!isNaN(seconds)) {
             labels.push(date);
-            data.push(seconds);
+            data.push(seconds);  // เก็บข้อมูลเป็นวินาทีเต็ม
           }
         });
 
-        const ctx = document.getElementById('chart').getContext('2d');
-
-        new Chart(ctx, {
+        new Chart(document.getElementById('chart'), {
           type: 'line',
           data: {
             labels,
             datasets: [{
-              label: 'เวลาท่าฟรีสไตล์ (นาที:วินาที)',
+              label: 'เวลาท่าฟรีสไตล์ (วินาที)',
               data,
               borderColor: 'rgba(54, 162, 235, 1)',
               backgroundColor: 'rgba(54, 162, 235, 0.2)',
               fill: true,
               tension: 0.3,
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              // ให้จุดเป็นวงกลมชัดเจน
-              pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+              pointRadius: 5
             }]
           },
           options: {
@@ -55,15 +57,7 @@
             scales: {
               y: {
                 title: { display: true, text: 'เวลา (วินาที)' },
-                beginAtZero: true,
-                ticks: {
-                  // แปลงเลขวินาทีให้แสดงเป็นนาที:วินาที ในแกน Y ก็ได้ (ถ้าต้องการ)
-                  callback: function(value) {
-                    const min = Math.floor(value / 60);
-                    const sec = value % 60;
-                    return min + ':' + sec.toString().padStart(2, '0');
-                  }
-                }
+                beginAtZero: true
               },
               x: {
                 title: { display: true, text: 'วันที่' }
@@ -72,20 +66,11 @@
             plugins: {
               tooltip: {
                 callbacks: {
-                  label: function(context) {
+                  label: context => {
                     const seconds = context.parsed.y;
-                    const min = Math.floor(seconds / 60);
-                    const sec = Math.round(seconds % 60);
-                    return `เวลา: ${min}:${sec.toString().padStart(2, '0')}`;
-                  },
-                  title: function(context) {
-                    return `วันที่: ${context[0].label}`;
+                    return `เวลา: ${formatMinSec(seconds)}`;
                   }
                 }
-              },
-              legend: {
-                display: true,
-                position: 'bottom'
               }
             }
           }
