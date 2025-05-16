@@ -21,7 +21,7 @@
 
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
-    const sheetName = 'Data'; // ชื่อชีตจริงที่เก็บข้อมูลทั้งหมด
+    const sheetName = 'Data'; // ชื่อชีตหลักที่เก็บข้อมูลรวมทุกท่า
     const query = encodeURIComponent('SELECT A, B, C, D');
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
@@ -32,24 +32,26 @@
         const rawData = [];
 
         json.table.rows.forEach(row => {
-          const date = row.c[0]?.v;
+          const dateObj = row.c[0]?.v;
           const stroke = row.c[1]?.v?.trim();
           const minutes = parseInt(row.c[2]?.v || 0);
           const seconds = parseInt(row.c[3]?.v || 0);
 
           if (
             stroke === 'ท่าฟรีสไตล์' &&
-            date && !isNaN(minutes) && !isNaN(seconds)
+            dateObj && !isNaN(minutes) && !isNaN(seconds)
           ) {
-            const dateObj = new Date(date);
-            const formattedDate = dateObj.toLocaleDateString('th-TH');
-            const totalSeconds = minutes * 60 + seconds;
-            rawData.push({ date: formattedDate, sort: dateObj, value: totalSeconds });
+            const jsDate = new Date(dateObj);
+            const label = jsDate.toLocaleDateString('th-TH');
+            rawData.push({
+              date: label,
+              sort: jsDate,
+              value: minutes * 60 + seconds
+            });
           }
         });
 
         rawData.sort((a, b) => a.sort - b.sort);
-
         const labels = rawData.map(item => item.date);
         const data = rawData.map(item => item.value);
 
