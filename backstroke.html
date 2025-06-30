@@ -12,7 +12,7 @@
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
     const sheetName = 'Sheet2';
-    const stroke = 'Butterfly';
+    const stroke = 'Backstroke';
 
     const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
@@ -39,7 +39,7 @@
           data: {
             labels: labels,
             datasets: [{
-              label: `เวลา (Butterfly)`,
+              label: `เวลา (Backstroke)`,
               data: data,
               backgroundColor: 'rgba(255, 99, 132, 0.2)',
               borderColor: 'rgba(255, 99, 132, 1)',
