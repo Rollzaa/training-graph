@@ -7,11 +7,14 @@
 </head>
 <body>
   <h2>กราฟท่ากบ</h2>
-  <canvas id="breaststrokeChart"></canvas>
+  <canvas id="strokeChart"></canvas>
+
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
-    const sheetName = 'Sheet_breaststroke';
-    const query = encodeURIComponent('SELECT A, C, D');
+    const sheetName = 'Sheet2';
+    const stroke = 'Breaststroke';
+
+    const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
     fetch(url)
@@ -20,6 +23,7 @@
         const json = JSON.parse(rep.substring(47).slice(0, -2));
         const labels = [];
         const data = [];
+
         json.table.rows.forEach(row => {
           const date = row.c[0]?.v;
           const minutes = parseInt(row.c[1]?.v || 0);
@@ -29,17 +33,19 @@
             data.push(minutes * 60 + seconds);
           }
         });
-        new Chart(document.getElementById('breaststrokeChart'), {
+
+        new Chart(document.getElementById('strokeChart'), {
           type: 'line',
           data: {
             labels: labels,
             datasets: [{
-              label: 'เวลาท่ากบ (นาที:วินาที)',
+              label: `เวลา (Breaststroke)`,
               data: data,
-              backgroundColor: 'rgba(255, 206, 86, 0.2)',
-              borderColor: 'rgba(255, 206, 86, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
               borderWidth: 2,
-              fill: true
+              fill: true,
+              tension: 0.3
             }]
           },
           options: {
