@@ -2,17 +2,17 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>กราฟท่าผีเสื้อ</title>
+  <title>กราฟท่ากบ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>กราฟท่าผีเสื้อ</h2>
+  <h2>กราฟท่ากบ</h2>
   <canvas id="strokeChart"></canvas>
 
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
     const sheetName = 'Sheet2';
-    const stroke = 'Butterfly';
+    const stroke = 'Breaststroke';
 
     const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
