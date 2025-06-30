@@ -6,10 +6,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
-  <h2><b>กราฟท่าฟรีสไตล์</b></h2>
+  <h2>กราฟท่าฟรีสไตล์</h2>
   <canvas id="freestyleChart"></canvas>
-
   <script>
     const sheetId = '1G05TnqQZN6i5SRTyHl8MHhnvld-t-J26tlIrca99XW0';
     const sheetName = 'Sheet_freestyle';
@@ -22,7 +20,6 @@
         const json = JSON.parse(rep.substring(47).slice(0, -2));
         const labels = [];
         const data = [];
-
         json.table.rows.forEach(row => {
           const date = row.c[0]?.v;
           const minutes = parseInt(row.c[1]?.v || 0);
@@ -32,7 +29,6 @@
             data.push(minutes * 60 + seconds);
           }
         });
-
         new Chart(document.getElementById('freestyleChart'), {
           type: 'line',
           data: {
@@ -43,42 +39,34 @@
               backgroundColor: 'rgba(54, 162, 235, 0.2)',
               borderColor: 'rgba(54, 162, 235, 1)',
               borderWidth: 2,
-              fill: true,
-              pointRadius: 5,
-              pointHoverRadius: 7
+              fill: true
             }]
           },
           options: {
             responsive: true,
             scales: {
               y: {
-                title: {
-                  display: true,
-                  text: 'เวลา (นาที:วินาที)'
-                },
+                title: { display: true, text: 'เวลา (นาที:วินาที)' },
                 ticks: {
-                  callback: function(value) {
-                    const minutes = Math.floor(value / 60);
-                    const seconds = Math.round(value % 60);
-                    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                  callback: value => {
+                    const min = Math.floor(value / 60);
+                    const sec = Math.round(value % 60);
+                    return `${min}:${sec.toString().padStart(2, '0')}`;
                   }
                 }
               },
               x: {
-                title: {
-                  display: true,
-                  text: 'วันที่'
-                }
+                title: { display: true, text: 'วันที่' }
               }
             },
             plugins: {
               tooltip: {
                 callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    const minutes = Math.floor(value / 60);
-                    const seconds = Math.round(value % 60);
-                    return `เวลา: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                  label: context => {
+                    const val = context.parsed.y;
+                    const min = Math.floor(val / 60);
+                    const sec = Math.round(val % 60);
+                    return `เวลา: ${min}:${sec.toString().padStart(2, '0')}`;
                   }
                 }
               }
@@ -87,6 +75,5 @@
         });
       });
   </script>
-
 </body>
 </html>
