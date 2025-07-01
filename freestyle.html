@@ -14,6 +14,7 @@
     const sheetName = 'Sheets3';
     const stroke = 'Freestyle';
 
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet_freestyle");
     const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
