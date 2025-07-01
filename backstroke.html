@@ -11,7 +11,7 @@
     fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/backstroke")
       .then((response) => response.json())
       .then((data) => {
-        const breaststrokeData = data.filter(row => row["Stroke Type"] === "breaststroke");
+        const breaststrokeData = data.filter(row => row["Stroke Type"] === "backstroke");
         const labels = breaststrokeData.map(row => row["Date"]);
         const times = breaststrokeData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
         new Chart(document.getElementById("chart"), {
