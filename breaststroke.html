@@ -6,14 +6,13 @@
 </head>
 <body>
   <h2>Breaststroke</h2>
-  <canvas id="chart" width="400" height="200"></canvas>
+  <canvas id="chart"></canvas>
   <script>
     fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/breaststroke")
-      .then((response) => response.json())
+      .then((res) => res.json())
       .then((data) => {
-        const breaststrokeData = data.filter(row => row["Stroke Type"] === "breaststroke");
-        const labels = breaststrokeData.map(row => row["Date"]);
-        const times = breaststrokeData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
+        const labels = data.map(row => row.Date);
+        const times = data.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
         new Chart(document.getElementById("chart"), {
           type: "line",
           data: {
@@ -22,7 +21,6 @@
               label: "Breaststroke Time (seconds)",
               data: times,
               borderColor: "green",
-              borderWidth: 2,
               fill: false
             }]
           }
