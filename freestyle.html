@@ -11,9 +11,9 @@
     fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/freestyle")
       .then((response) => response.json())
       .then((data) => {
-        const freestyleData = data.filter(row => row["Stroke Type"] === "freestyle");
-        const labels = freestyleData.map(row => row["Date"]);
-        const times = freestyleData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
+        // ไม่ต้องกรอง เพราะข้อมูลในชีตนี้เฉพาะ freestyle อยู่แล้ว
+        const labels = data.map(row => row["Date"]);
+        const times = data.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
         new Chart(document.getElementById("chart"), {
           type: "line",
           data: {
