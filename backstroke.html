@@ -12,7 +12,7 @@
   <script>
     const sheetId = '1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU';
     const sheetName = 'Sheets3';
-    const stroke = 'Backstroke';
+    const stroke = 'backstroke';
 
     const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
@@ -39,7 +39,7 @@
           data: {
             labels: labels,
             datasets: [{
-              label: `เวลา (Backstroke)`,
+              label: `เวลา (backstroke)`,
               data: data,
               backgroundColor: 'rgba(75, 192, 192, 0.2)',    // เขียวอ่อน
               borderColor: 'rgba(75, 192, 192, 1)',          // เขียวเข้ม
