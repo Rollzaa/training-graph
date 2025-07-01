@@ -1,82 +1,30 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>กราฟท่าผีเสื้อ</title>
+  <title>Butterfly Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>กราฟท่าผีเสื้อ</h2>
-  <canvas id="strokeChart"></canvas>
-
+  <h2>Butterfly</h2>
+  <canvas id="chart" width="400" height="200"></canvas>
   <script>
-    const sheetId = '1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU';
-    const sheetName = 'Sheets3';
-    const stroke = 'Butterfly';
-
-    const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
-
-    fetch(url)
-      .then(res => res.text())
-      .then(rep => {
-        const json = JSON.parse(rep.substring(47).slice(0, -2));
-        const labels = [];
-        const data = [];
-
-        json.table.rows.forEach(row => {
-          const date = row.c[0]?.v;
-          const minutes = parseInt(row.c[1]?.v || 0);
-          const seconds = parseInt(row.c[2]?.v || 0);
-          if (date && !isNaN(minutes) && !isNaN(seconds)) {
-            labels.push(date);
-            data.push(minutes * 60 + seconds);
-          }
-        });
-
-        new Chart(document.getElementById('strokeChart'), {
-          type: 'line',
+    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/Sheets3")
+      .then((response) => response.json())
+      .then((data) => {
+        const butterflyData = data.filter(row => row["Stroke Type"] === "butterfly");
+        const labels = butterflyData.map(row => row["Date"]);
+        const times = butterflyData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
+        new Chart(document.getElementById("chart"), {
+          type: "line",
           data: {
             labels: labels,
             datasets: [{
-              label: `เวลา (Butterfly)`,
-              data: data,
-              backgroundColor: 'rgba(153, 102, 255, 0.2)',   // ม่วงอ่อน
-              borderColor: 'rgba(153, 102, 255, 1)',         // ม่วงเข้ม
+              label: "Butterfly Time (seconds)",
+              data: times,
+              borderColor: "red",
               borderWidth: 2,
-              fill: true,
-              tension: 0.3
+              fill: false
             }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                title: { display: true, text: 'เวลา (นาที:วินาที)' },
-                ticks: {
-                  callback: value => {
-                    const min = Math.floor(value / 60);
-                    const sec = Math.round(value % 60);
-                    return `${min}:${sec.toString().padStart(2, '0')}`;
-                  }
-                }
-              },
-              x: {
-                title: { display: true, text: 'วันที่' }
-              }
-            },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: context => {
-                    const val = context.parsed.y;
-                    const min = Math.floor(val / 60);
-                    const sec = Math.round(val % 60);
-                    return `เวลา: ${min}:${sec.toString().padStart(2, '0')}`;
-                  }
-                }
-              }
-            }
           }
         });
       });
