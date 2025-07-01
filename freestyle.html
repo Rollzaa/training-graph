@@ -6,14 +6,13 @@
 </head>
 <body>
   <h2>Freestyle</h2>
-  <canvas id="chart" width="400" height="200"></canvas>
+  <canvas id="chart"></canvas>
   <script>
-    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/backstroke")
-      .then((response) => response.json())
+    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/freestyle")
+      .then((res) => res.json())
       .then((data) => {
-        const breaststrokeData = data.filter(row => row["Stroke Type"] === "freestyle");
-        const labels = breaststrokeData.map(row => row["Date"]);
-        const times = breaststrokeData.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
+        const labels = data.map(row => row.Date);
+        const times = data.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
         new Chart(document.getElementById("chart"), {
           type: "line",
           data: {
@@ -21,8 +20,7 @@
             datasets: [{
               label: "Freestyle Time (seconds)",
               data: times,
-              borderColor: "red",
-              borderWidth: 2,
+              borderColor: "blue",
               fill: false
             }]
           }
