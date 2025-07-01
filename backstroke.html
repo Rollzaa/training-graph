@@ -13,7 +13,7 @@
     const sheetId = '1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU';
     const sheetName = 'Sheets3';
     const stroke = 'backstroke';
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet_backstroke");
+    
     const query = encodeURIComponent(`SELECT A, C, D WHERE B = '${stroke}'`);
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
 
