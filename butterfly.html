@@ -8,12 +8,11 @@
   <h2>Butterfly</h2>
   <canvas id="chart"></canvas>
   <script>
-    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/Sheets3")
+    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/butterfly")
       .then((res) => res.json())
       .then((data) => {
-        const butterflyData = data.filter(row => row["Stroke Type"] === "butterfly");
-        const labels = butterflyData.map(row => row.Date);
-        const times = butterflyData.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
+        const labels = data.map(row => row.Date);
+        const times = data.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
         new Chart(document.getElementById("chart"), {
           type: "line",
           data: {
