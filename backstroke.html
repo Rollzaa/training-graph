@@ -8,11 +8,12 @@
   <h2>Backstroke</h2>
   <canvas id="chart"></canvas>
   <script>
-    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/backstroke")
+    fetch("https://opensheet.elk.sh/1Apvc1d82kMjOAaXMt6YBpxdc4EOPyPjvE4yid4aomrU/Sheets3")
       .then((res) => res.json())
       .then((data) => {
-        const labels = data.map(row => row.Date);
-        const times = data.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
+        const backstrokeData = data.filter(row => row["Stroke Type"] === "backstroke");
+        const labels = backstrokeData.map(row => row.Date);
+        const times = backstrokeData.map(row => parseInt(row.Minutes) * 60 + parseInt(row.Seconds));
         new Chart(document.getElementById("chart"), {
           type: "line",
           data: {
