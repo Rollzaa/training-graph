@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Swimming Stroke Charts</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    canvas { max-width: 700px; margin: 20px auto; display: block; }
+    h2 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>Swimming Stroke Time Charts</h1>
+  
+  <h2>Freestyle</h2>
+  <canvas id="freestyleChart"></canvas>
+
+  <h2>Backstroke</h2>
+  <canvas id="backstrokeChart"></canvas>
+
+  <h2>Breaststroke</h2>
+  <canvas id="breaststrokeChart"></canvas>
+
+  <h2>Butterfly</h2>
+  <canvas id="butterflyChart"></canvas>
+
+  <script>
+    const sheets = {
+      freestyle: "1qpCBD2v-rtIcUt7Va4q-LiWaV6KpKkk8bq1o6mG8A1Q",
+      backstroke: "1VD5P-9XX0uBcCFLgTq9wUO59AUuuCa03F4hyoqKBhNw",
+      breaststroke: "11pEfMulF01ixthZjASp-IVge_sqzBPbPaXg8VHeKgxQ",
+      butterfly: "1fgK8lOajZ84SQbaYBgcrAQij_uZPPm0iEL4vsMEx1FA"
+    };
+
+    function drawChart(sheetId, canvasId, strokeLabel, color) {
+      fetch(`https://opensheet.elk.sh/${sheetId}/Sheet1`)
+        .then(res => res.json())
+        .then(data => {
+          const labels = data.map(row => row["Date"]);
+          const times = data.map(row => parseInt(row["Minutes"]) * 60 + parseInt(row["Seconds"]));
+          new Chart(document.getElementById(canvasId), {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [{
+                label: `${strokeLabel} Time (seconds)`,
+                data: times,
+                borderColor: color,
+                backgroundColor: color,
+                fill: false,
+                tension: 0.3
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: { display: true, text: "Time (seconds)" }
+                },
+                x: {
+                  title: { display: true, text: "Date" }
+                }
+              }
+            }
+          });
+        });
+    }
+
+    drawChart(sheets.freestyle, "freestyleChart", "Freestyle", "blue");
+    drawChart(sheets.backstroke, "backstrokeChart", "Backstroke", "green");
+    drawChart(sheets.breaststroke, "breaststrokeChart", "Breaststroke", "orange");
+    drawChart(sheets.butterfly, "butterflyChart", "Butterfly", "purple");
+  </script>
+</body>
+</html>
