@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>กราฟท่าผีเสื้อ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>กราฟท่าผีเสื้อ</h2>
+  <canvas id="chart"></canvas>
+  <script>
+    const sheetId = '1zou8xYIj1P7u1ZKWD8ZbK_NCDVHgm9yXEy8jBZiJsLI';
+    const query = encodeURIComponent("SELECT A, C, D WHERE B = 'Butterfly'");
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=Sheets4&tq=${query}`;
+    fetch(url).then(res => res.text()).then(rep => {
+      const json = JSON.parse(rep.substring(47).slice(0, -2));
+      const labels = [], data = [];
+      json.table.rows.forEach(row => {
+        const date = row.c[0]?.v, min = +row.c[1]?.v || 0, sec = +row.c[2]?.v || 0;
+        if (date) { labels.push(date); data.push(min * 60 + sec); }
+      });
+      new Chart(document.getElementById('chart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'เวลาท่าผีเสื้อ (นาที:วินาที)',
+            data,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2, fill: true, pointRadius: 5, pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              title: { display: true, text: 'เวลา (นาที:วินาที)' },
+              ticks: {
+                callback: v => `${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}`
+              }
+            },
+            x: { title: { display: true, text: 'วันที่' } }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed.y;
+                  return `เวลา: ${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
 
