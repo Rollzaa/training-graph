@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>กราฟรวมทุกท่า (มีสีและชื่อท่าแยก)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h2>กราฟเวลาว่ายน้ำ (แยกสีตามท่า)</h2>
+<canvas id="chart"></canvas>
+
+<script>
+// ---------- ตั้งค่า Google Sheets ----------
+const sheetId   = '1zou8xYIj1P7u1ZKWD8ZbK_NCDVHgm9yXEy8jBZiJsLI';
+const sheetName = 'Sheets4';
+const query     = encodeURIComponent('SELECT A, B, C, D');
+const url       = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+// ---------- สีประจำแต่ละท่า ----------
+const strokeInfo = {
+  'ท่าฟรีสไตล์'  : {color: 'rgba(75,192,192,1)',   bg:'rgba(75,192,192,0.15)'},
+  'ท่ากรรเชียง'  : {color: 'rgba(54,162,235,1)',   bg:'rgba(54,162,235,0.15)'},
+  'ท่ากบ'        : {color: 'rgba(153,102,255,1)',  bg:'rgba(153,102,255,0.15)'},
+  'ท่าผีเสื้อ'    : {color: 'rgba(255,99,132,1)',  bg:'rgba(255,99,132,0.15)'}
+};
+
+// ---------- ดึงข้อมูล ----------
+fetch(url)
+  .then(r => r.text())
+  .then(t => {
+    const json = JSON.parse(t.substring(47).slice(0,-2));
+    const rows = json.table.rows;
+
+    // เก็บวันที่ไม่ซ้ำ
+    const dates = [...new Set(rows.map(r => r.c[0]?.f || r.c[0]?.v))].sort();
+
+    // เตรียม dataObj[stroke][date] = seconds
+    const dataObj = {};
+    Object.keys(strokeInfo).forEach(stk => dataObj[stk] = {});
+
+    rows.forEach(r=>{
+      const date   = r.c[0]?.f || r.c[0]?.v;
+      const stroke = r.c[1]?.v;
+      const min    = +r.c[2]?.v || 0;
+      const sec    = +r.c[3]?.v || 0;
+      if (date && strokeInfo[stroke]) {
+        dataObj[stroke][date] = min*60 + sec;
+      }
+    });
+
+    // สร้าง datasets
+    const datasets = Object.entries(strokeInfo).map(([stroke,clr])=>{
+      const series = dates.map(d => dataObj[stroke][d] ?? null); // ไม่มีข้อมูลวันนั้น = null
+      return {
+        label: stroke,
+        data : series,
+        borderColor   : clr.color,
+        backgroundColor: clr.bg,
+        borderWidth: 2,
+        spanGaps: true,
+        pointRadius: 4,
+        fill: false
+      };
+    });
+
+    // ---------- สร้างกราฟ ----------
+    new Chart(document.getElementById('chart'),{
+      type:'line',
+      data:{ labels: dates, datasets },
+      options:{
+        responsive:true,
+        scales:{
+          y:{
+            title:{display:true,text:'เวลา (นาที:วินาที)'},
+            ticks:{ callback:v=>`${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}` }
+          },
+          x:{ title:{display:true,text:'วันที่'} }
+        },
+        plugins:{
+          tooltip:{
+            mode:'nearest',
+            intersect:false,
+            callbacks:{
+              label:ctx=>{
+                const v=ctx.parsed.y;
+                return `${ctx.dataset.label}: ${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}`;
+              }
+            }
+          }
+        }
+      }
+    });
+  })
+  .catch(err => console.error('ดึงข้อมูลไม่ได้:',err));
+</script>
+</body>
+</html>
