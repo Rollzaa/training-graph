@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>กราฟเวลาว่ายน้ำ (รวมทุกท่า)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>กราฟเวลาว่ายน้ำ (รวมทุกท่า)</h2>
+  <canvas id="chart"></canvas>
+
+<script>
+/* ====== ตั้งค่าไฟล์ Google Sheets ====== */
+const sheetId   = '1zou8xYIj1P7u1ZKWD8ZbK_NCDVHgm9yXEy8jBZiJsLI'; // ← ID จากลิงก์ที่ให้มา
+const sheetName = 'Sheets4';                                       // ชื่อชีตรวม
+const query     = encodeURIComponent('SELECT A, C, D');            // ดึงทุกแถว ทุกท่า
+const url       = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+/* ====== ดึงข้อมูลแล้วสร้างกราฟ ====== */
+fetch(url)
+  .then(r => r.text())
+  .then(t => {
+     const json = JSON.parse(t.substring(47).slice(0,-2)); // ตัดส่วนเกินออกแล้ว parse
+     const labels = [], data = [];
+     json.table.rows.forEach(row => {
+        const date = row.c[0]?.f || row.c[0]?.v;            // วันที่ (Google ใส่ใน .f ถ้าเป็น Date)
+        const min  = +row.c[1]?.v || 0;                     // Minutes
+        const sec  = +row.c[2]?.v || 0;                     // Seconds
+        if (date) { labels.push(date); data.push(min*60 + sec); }
+     });
+
+     new Chart(document.getElementById('chart'),{
+       type:'line',
+       data:{
+         labels,
+         datasets:[{
+           label:'เวลาว่ายน้ำรวม (นาที:วินาที)',
+           data,
+           backgroundColor:'rgba(54,162,235,0.2)',
+           borderColor:'rgba(54,162,235,1)',
+           borderWidth:2,
+           fill:true,
+           pointRadius:4
+         }]
+       },
+       options:{
+         responsive:true,
+         scales:{
+           y:{
+             title:{display:true,text:'เวลา (นาที:วินาที)'},
+             ticks:{callback:v=>`${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}`}
+           },
+           x:{title:{display:true,text:'วันที่'}}
+         },
+         plugins:{
+           tooltip:{
+             callbacks:{
+               label:ctx=>{
+                 const v = ctx.parsed.y;
+                 return `เวลา: ${Math.floor(v/60)}:${(v%60).toString().padStart(2,'0')}`;
+               }
+             }
+           }
+         }
+       }
+     });
+  })
+  .catch(err => console.error('อ่านข้อมูลไม่ได้ (เช็กสิทธิ์แชร์?) :', err));
+</script>
+</body>
+</html>
